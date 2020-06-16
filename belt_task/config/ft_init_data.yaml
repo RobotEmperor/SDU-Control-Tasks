@@ -1,0 +1,63 @@
+
+# ft sensor initialize
+
+sampling_time : 2.0
+control_time : 0.002 #2ms, 500Hz
+mass_of_tool : 4.118
+
+# simulation on/off
+simulation : 1 # 1 is on, 0 is off 
+
+
+#low pass filter
+lpf_force_cutoff_frequency  : 10
+lpf_torque_cutoff_frequency : 10
+
+#high pass filter
+hpf_force_cutoff_frequency  : 0
+hpf_torque_cutoff_frequency : 0
+
+
+#ft sensor kalman filter modeling 
+
+gain_Q : 0.001
+gain_R_low_frequency : 6    # 6
+gain_R_high_frequency : 1 # 0.1
+
+gain_R_torque_low_frequency : 6    # 6
+gain_R_torque_high_frequency : 0.01 # 0.1
+
+limit_low_rate_of_change : -1
+limit_high_rate_of_change : 1
+
+
+#ft collision detection parameter
+# force  
+fx_k : 2
+fx_high_limit : 5
+fx_low_limit : -5
+
+fy_k : 2
+fy_high_limit : 5
+fy_low_limit :  -5
+
+fz_k : 2
+fz_high_limit : 3
+fz_low_limit :  -3
+
+## torque 
+tx_k : 3
+tx_high_limit : 2
+tx_low_limit :  -2
+
+ty_k : 3
+ty_high_limit : 2
+ty_low_limit :  -2
+
+tz_k : 3
+tz_high_limit : 2
+tz_low_limit : -2
+
+
+
+
