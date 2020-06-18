@@ -90,10 +90,10 @@ void ToolEstimation::set_gravity_input_data(Eigen::MatrixXd gravity_input)
 }
 std::vector<double> ToolEstimation::get_estimated_force(Eigen::MatrixXd ft_data, Eigen::MatrixXd linear_acc_data)  // input entire force torque
 {
-  get_contacted_force_.clear();
-
   if(orientation_base_to_tool_.determinant() == 0) // inverse check
     return get_contacted_force_;
+
+  get_contacted_force_.clear();
 
   compensated_acc_ = linear_acc_data - (orientation_base_to_tool_.inverse()*gravity_);
 

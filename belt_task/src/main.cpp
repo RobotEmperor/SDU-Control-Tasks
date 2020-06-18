@@ -37,10 +37,6 @@ void loop_task_proc(void *arg)
     actual_tcp_pose = rtde_receive->getActualTCPPose();
 
     //data types will be changed
-    for(int var = 0; var < 6; var ++)
-    {
-      raw_force_torque_data_matrix(var,0) = raw_ft_data[var];
-    }
     tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
     tool_acc_data_matrix(1,0) = -acutal_tcp_acc[1];
     tool_acc_data_matrix(2,0) = -acutal_tcp_acc[2];
@@ -69,6 +65,7 @@ void loop_task_proc(void *arg)
   {
     static double previous_t = 0.0;
     tstart = rt_timer_read();
+    time_count += 0.002;
 
     //do something
     //check if task command is received or not
@@ -117,7 +114,6 @@ void loop_task_proc(void *arg)
       }
       //force torque sensor filtering
       tool_estimation->set_orientation_data(tf_current_matrix);
-      tool_acc_data_matrix = tf_current_matrix*tool_acc_data_matrix;
 
       contacted_ft_data = tool_estimation->get_estimated_force(raw_force_torque_data_matrix, tool_acc_data_matrix.block(0,0,3,1));
 
@@ -196,7 +192,7 @@ void loop_task_proc(void *arg)
     {
       if(!gazebo_check)
       {
-        rtde_control->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
+        //rtde_control->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
       }
       else
       {
@@ -344,15 +340,15 @@ int main (int argc, char **argv)
   {
     const std::string robot_ip = "192.168.1.130"; // robot B
 
-    //rtde_receive = std::make_shared<RTDEReceiveInterface>(robot_ip);
-    //rtde_control = std::make_shared<RTDEControlInterface>(robot_ip);
+    rtde_receive = std::make_shared<RTDEReceiveInterface>(robot_ip);
+    rtde_control = std::make_shared<RTDEControlInterface>(robot_ip);
 
-    //rtde_control->zeroFtSensor();
+    rtde_control->zeroFtSensor();
 
     std::cout << COLOR_YELLOW_BOLD << "Robot connected to your program" << COLOR_RESET << std::endl;
     std::cout << COLOR_RED_BOLD << "Robot will move 2 seconds later" << COLOR_RESET << std::endl;
     usleep(2000000);
-    //rtde_control->moveJ(current_Q,0.1,0.1); // move to initial pose
+    rtde_control->moveJ(current_q,0.1,0.1); // move to initial pose
     std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
     usleep(2000000);
   }
@@ -377,7 +373,7 @@ int main (int argc, char **argv)
   usleep(3000000);
   if(!gazebo_check)
   {
-    //rtde_control->servoStop();
+    rtde_control->servoStop();
   }
   return 0;
 }
