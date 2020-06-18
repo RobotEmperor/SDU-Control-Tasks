@@ -33,20 +33,20 @@ void loop_task_proc(void *arg)
   {
     std::cout << COLOR_GREEN_BOLD << "Real robot start " << COLOR_RESET << std::endl;
     //getting sensor values sensor filter
-    //      acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
-    //      actual_tcp_pose = rtde_receive->getActualTCPPose();
-    //
-    // data types will be changed
-    //      for(int var = 0; var < 6; var ++)
-    //      {
-    //        raw_force_torque_data_matrix(var,0) = raw_ft_data[var];
-    //      }
-    //      tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
-    //      tool_acc_data_matrix(1,0) = -acutal_tcp_acc[1];
-    //      tool_acc_data_matrix(2,0) = -acutal_tcp_acc[2];
-    //
-    //      tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
-    tf_current = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]), EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
+    acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
+    actual_tcp_pose = rtde_receive->getActualTCPPose();
+
+    //data types will be changed
+    for(int var = 0; var < 6; var ++)
+    {
+      raw_force_torque_data_matrix(var,0) = raw_ft_data[var];
+    }
+    tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
+    tool_acc_data_matrix(1,0) = -acutal_tcp_acc[1];
+    tool_acc_data_matrix(2,0) = -acutal_tcp_acc[2];
+
+    tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
+    //tf_current = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]), EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
 
     for(int num_row = 0; num_row < 4; num_row ++)
     {
@@ -67,25 +67,16 @@ void loop_task_proc(void *arg)
 
   while(1)
   {
-    static int sum_count = 0;
     static double previous_t = 0.0;
-    static double sum_delayed_time = 0.0;
-    static double aver_delayed_time = 0.0;
-
     tstart = rt_timer_read();
 
-    sum_delayed_time += ((rt_timer_read() - tstart)/1000000.0  - previous_t) - control_time*1000;
-    if(sum_count%1500 == 0 && sum_count != 0) // every 3 seconds,
-    {
-      aver_delayed_time = sum_delayed_time/sum_count;
-      //printf("Average delayed time in 3s: %.5f ms\n",aver_delayed_time);
-      sum_delayed_time = 0;
-      sum_count = 0;
-    }
-    previous_t = (rt_timer_read() - tstart)/1000000.0;
-    time_count += 0.002;
-    sum_count += 1;
     //do something
+    //check if task command is received or not
+    if(ros_state->get_task_command().compare(previous_task_command) != 0)
+    {
+      ur10e_task->clear_task_motion();
+      ur10e_task->change_motion(ros_state->get_task_command());
+    }
 
     //run motion trajectory task_motion
     ur10e_task->set_current_pose_eaa(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2],compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]);
@@ -99,23 +90,23 @@ void loop_task_proc(void *arg)
     if(!gazebo_check)
     {
       //getting sensor values sensor filter
-      //raw_ft_data     = rtde_receive->getActualTCPForce();
-      //acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
-      //actual_tcp_pose = rtde_receive->getActualTCPPose();
-      //joint_positions = rtde_receive->getActualQ();
-      //
-      // data types will be changed
-      //for(int var = 0; var < 6; var ++)
-      //{
-      //  raw_force_torque_data_matrix(var,0) = raw_ft_data[var];
-      //}
-      //tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
-      //tool_acc_data_matrix(1,0) = -acutal_tcp_acc[1];
-      //tool_acc_data_matrix(2,0) = -acutal_tcp_acc[2];
-      //
-      //tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
+      raw_ft_data     = rtde_receive->getActualTCPForce();
+      acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
+      actual_tcp_pose = rtde_receive->getActualTCPPose();
+      joint_positions = rtde_receive->getActualQ();
 
-      tf_current = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]), EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
+      //data types will be changed
+      for(int var = 0; var < 6; var ++)
+      {
+        raw_force_torque_data_matrix(var,0) = raw_ft_data[var];
+      }
+      tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
+      tool_acc_data_matrix(1,0) = -acutal_tcp_acc[1];
+      tool_acc_data_matrix(2,0) = -acutal_tcp_acc[2];
+
+      tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
+
+      //tf_current = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]), EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
 
       for(int num_row = 0; num_row < 4; num_row ++)
       {
@@ -164,59 +155,63 @@ void loop_task_proc(void *arg)
         EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
 
     //solve ik problem
-//    solutions = solver.solve(tf_desired, state);
+    solutions = solver.solve(tf_desired, state);
 
     //from covid - robot
-//    for (unsigned int num = 0; num < 6; num ++)
-//    {
-//      // LOG_DEBUG("[%s]", "Wrapping for joint");
-//      const double diffOrig = fabs(current_q[num] - solutions[1][num]);
-//      // LOG_DEBUG("[diffOrig: %e , %e]", (solutions[i][j])/rw::math::Pi*180.0, diffOrig );
-//
-//      const double diffAdd = fabs(current_q[num] - (solutions[1][num] + 2 * rw::math::Pi));
-//      // LOG_DEBUG("[diffAdd: %e , %e]", (solutions[i][j]+2*rw::math::Pi)/rw::math::Pi*180.0, diffAdd );
-//
-//      const double diffSub = fabs(current_q[num] - (solutions[1][num] - 2 * rw::math::Pi));
-//      // LOG_DEBUG("[diffSub: %e , %e]", (solutions[i][j]-2*rw::math::Pi)/rw::math::Pi*180.0, diffSub );
-//
-//      if (diffAdd < diffOrig && diffAdd < diffSub)
-//      {
-//        solutions[1][num] += 2 * rw::math::Pi;
-//      }
-//      else if (diffSub < diffOrig && diffSub < diffAdd)
-//      {
-//        solutions[1][num] -= 2 * rw::math::Pi;
-//      }
-//    }
-//
-//    //check velocity
-//    for(int num = 0; num <6 ; num ++)
-//    {
-//      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 45*DEGREE2RADIAN)
-//      {
-//        cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
-//        std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
-//        joint_vel_limits = true;
-//      }
-//    }
-//
-//    //send command in joint space to ur robot or gazebo
-//    if(!joint_vel_limits)
-//    {
-//      if(!gazebo_check)
-//      {
-//        //rtde_control->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
-//      }
-//      else
-//      {
-//        ros_state->send_gazebo_command(solutions[1].toStdVector());
-//      }
-//      for(int num = 0; num <6 ; num ++)
-//      {
-//        current_q[num] = solutions[1].toStdVector()[num];
-//      }
-//    }
+    for (unsigned int num = 0; num < 6; num ++)
+    {
+      // LOG_DEBUG("[%s]", "Wrapping for joint");
+      const double diffOrig = fabs(current_q[num] - solutions[1][num]);
+      // LOG_DEBUG("[diffOrig: %e , %e]", (solutions[i][j])/rw::math::Pi*180.0, diffOrig );
 
+      const double diffAdd = fabs(current_q[num] - (solutions[1][num] + 2 * rw::math::Pi));
+      // LOG_DEBUG("[diffAdd: %e , %e]", (solutions[i][j]+2*rw::math::Pi)/rw::math::Pi*180.0, diffAdd );
+
+      const double diffSub = fabs(current_q[num] - (solutions[1][num] - 2 * rw::math::Pi));
+      // LOG_DEBUG("[diffSub: %e , %e]", (solutions[i][j]-2*rw::math::Pi)/rw::math::Pi*180.0, diffSub );
+
+      if (diffAdd < diffOrig && diffAdd < diffSub)
+      {
+        solutions[1][num] += 2 * rw::math::Pi;
+      }
+      else if (diffSub < diffOrig && diffSub < diffAdd)
+      {
+        solutions[1][num] -= 2 * rw::math::Pi;
+      }
+    }
+
+    //check velocity
+    for(int num = 0; num <6 ; num ++)
+    {
+      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 45*DEGREE2RADIAN)
+      {
+        cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
+        std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
+        joint_vel_limits = true;
+      }
+    }
+
+    //send command in joint space to ur robot or gazebo
+    if(!joint_vel_limits)
+    {
+      if(!gazebo_check)
+      {
+        rtde_control->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
+      }
+      else
+      {
+        ros_state->send_gazebo_command(solutions[1].toStdVector());
+      }
+      for(int num = 0; num <6 ; num ++)
+      {
+        current_q[num] = solutions[1].toStdVector()[num];
+      }
+    }
+    ros_state->send_raw_ft_data(raw_ft_data);
+    ros_state->send_filtered_ft_data(contacted_ft_data);
+
+
+    //data log save
     data_log->set_time_count(time_count);
     data_log->set_data_getActualQ(joint_positions);
     data_log->set_data_getActualTCPPose(actual_tcp_pose);
@@ -226,16 +221,22 @@ void loop_task_proc(void *arg)
     data_log->set_data_getFilteredForceTorque(filtered_ft_data);
     data_log->set_data_getContactedForceTorque(contacted_ft_data);
     data_log->set_data_new_line();
+    //
 
+    //check if there is out of the real-time control
     previous_t = (rt_timer_read() - tstart)/1000000.0;
+    if(previous_t > 2.0)
+      cout << previous_t << endl;
 
-    cout << previous_t << endl;
+    previous_task_command = ros_state->get_task_command();
+    ros_state->update_ros_data();
     rt_task_wait_period(NULL);
   }
-
 }
 void initialize()
 {
+  std::string path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/initial_condition.yaml";
+
   //simulation check
   gazebo_check = true;
   control_time = 0.002;
@@ -255,24 +256,19 @@ void initialize()
   //setting up control time and mass of tool
   tool_estimation ->set_parameters(control_time, 1.75);
   ur10e_traj->set_control_time(control_time);
-  ur10e_task->initialize(control_time);
+  ur10e_task->initialize(control_time, path_);
 
   //control
   force_x_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
   force_y_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
   force_z_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
 
+  //load robot initial data and calculate initial position
+
   //robot A
-  ur10e_task->set_initial_pose(-0.6649675947900577, 0.2054059150102794, 0.25997552421325143, -0.7298511759689527, -1.7577922996928013, 1.760382318187891); // set to be robot initial values
-  ur10e_task->set_initial_pose_eaa(-0.6649675947900577, 0.2054059150102794, 0.25997552421325143, -0.7298511759689527, -1.7577922996928013, 1.760382318187891); // set to be robot initial values
+  desired_pose_vector = ur10e_task -> get_current_pose();
 
-  desired_pose_vector[0] = -0.6649675947900577;
-  desired_pose_vector[1] = 0.2054059150102794 ;
-  desired_pose_vector[2] = 0.25997552421325143;
-  desired_pose_vector[3] = -0.7298511759689527;
-  desired_pose_vector[4] = -1.7577922996928013;
-  desired_pose_vector[5] = 1.760382318187891  ;
-
+  // have to fix for automatic calculation
   current_q[0] = 2.6559;
   current_q[1] = -1.85396;
   current_q[2] = -2.03763;
@@ -282,6 +278,7 @@ void initialize()
 
   joint_vel_limits = false;
   motion_time = 5;
+
   f_kp = 0;
   f_ki = 0;
   f_kd = 0;
@@ -294,15 +291,14 @@ void initialize()
   tool_acc_data_matrix.resize(4,1);
   tool_acc_data_matrix.fill(0);
 
-  task_command = "";
+  previous_task_command = "";
 
   //load motion data
-  std::string path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/initialize_belt_task.yaml";
+  path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/initialize_belt_task.yaml";
   ur10e_task->load_task_motion(path_,"initialize_belt_task");
   path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/initialize.yaml";
   ur10e_task->load_task_motion(path_,"initialize");
   path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/tcp_belt_task.yaml";
-  ur10e_task->set_initial_pose_eaa(-0.594295, 0.00668736, 0.244747, -0.7290212721930756, -1.7599986104134355, 1.7600122635046096); // set to be robot initial values
   ur10e_task->trans_tcp_to_base_motion(path_);
 }
 
@@ -368,7 +364,7 @@ int main (int argc, char **argv)
 
   printf("Starting cyclic task...\n");
   sprintf(str, "Belt Task Start");
-  rt_task_create(&loop_task, str, 0, 80, 0);//Create the real time task
+  rt_task_create(&loop_task, str, 0, 90, 0);//Create the real time task
   rt_task_start(&loop_task, &loop_task_proc, 0);//Since task starts in suspended mode, start task
 
   std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;

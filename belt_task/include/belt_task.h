@@ -4,7 +4,6 @@
  *  Created on: Jun 15, 2020
  *      Author: yik
  */
-
 #ifndef SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
 #define SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
 
@@ -122,7 +121,7 @@ Eigen::MatrixXd tool_acc_data_matrix;
 Eigen::MatrixXd tf_current_matrix;
 
 //task motion
-std::string task_command;
+std::string previous_task_command;
 
 //tf
 rw::math::Transform3D<> tf_tcp_desired_pose;

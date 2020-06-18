@@ -35,7 +35,7 @@ class TaskMotion
 public:
   TaskMotion();
   ~TaskMotion();
-  void initialize(double control_time_);
+  void initialize(double control_time_, std::string load_path_);
   void robot_initialize(); // joint space
   void trans_tcp_to_base_motion(std::string load_path_);
   void load_task_motion(std::string path_, std::string motion_);
@@ -49,12 +49,11 @@ public:
   double calculate_next_velocity(double first_vel, double second_vel);
   void calculate_init_final_velocity(int point_number);
 
-
   void clear_task_motion();
 
-  void set_point(double x, double y, double z, double roll, double pitch, double yaw, double time);
-  void set_initial_pose(double x, double y, double z, double roll, double pitch, double yaw);
-  void set_initial_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
+  void set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z, double time);
+  void set_initial_pose(double x, double y, double z, double axis_x, double axis_y, double axis_z);
+  void set_initial_task_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
   void set_current_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
 
   void load_data_initialize();
@@ -66,7 +65,6 @@ public:
   std::vector<double> get_desired_force_torque();
 
 private:
-
   int number_of_point;
   int all_point;
   int init_all_point;
@@ -78,26 +76,31 @@ private:
   bool task_done;
   bool base_frame_;
 
-  //
+  //initial condition
+  //robot's ee position
+  std::vector<double> initial_robot_ee_position;
+  std::vector<double> bigger_pulley_bearing_position;
+  std::vector<double> task_initial_position;
+
+  //modified robot position (in relative to base)
   std::map<int, std::vector<double>> motion_start_time_vector;
   std::map<int, std::vector<double>> motion_task_pose_vector;
   std::map<int, std::vector<double>> motion_task_init_vel_vector;
   std::map<int, std::vector<double>> motion_task_final_vel_vector;
 
-  //
+  //robot initial position (in relative to base)
   std::map<int, std::vector<double>> init_motion_start_time_vector;
   std::map<int, std::vector<double>> init_motion_task_pose_vector;
   std::map<int, std::vector<double>> init_motion_task_init_vel_vector;
   std::map<int, std::vector<double>> init_motion_task_final_vel_vector;
 
-  //init belt
+  //init belt (in relative to base)
   std::map<int, std::vector<double>> init_belt_motion_start_time_vector;
   std::map<int, std::vector<double>> init_belt_motion_task_pose_vector;
   std::map<int, std::vector<double>> init_belt_motion_task_init_vel_vector;
   std::map<int, std::vector<double>> init_belt_motion_task_final_vel_vector;
 
-
-  //tcp
+  //tcp (in relative to tcp frame)
   std::map<int, std::vector<double>> tcp_motion_start_time_vector;
   std::map<int, std::vector<double>> tcp_motion_task_pose_vector;
 
@@ -106,7 +109,6 @@ private:
 
   //tcp force
   std::map<int, std::vector<double>> tcp_motion_desired_force_vector;
-
 
   std::vector<double> current_pose_vector;
   std::vector<double> current_force_torque_vector;

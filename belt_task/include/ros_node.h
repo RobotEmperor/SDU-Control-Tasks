@@ -47,7 +47,6 @@ public:
 
   std::string get_task_command();
 
-
 private:
 
   double gain_k_, gain_i_, gain_p_;

@@ -16,7 +16,7 @@ TaskMotion::~TaskMotion()
 
 }
 
-void TaskMotion::initialize(double control_time_)
+void TaskMotion::initialize(double control_time_, std::string load_path_)
 {
   robot_traj = std::make_shared<EndEffectorTraj>();
   robot_traj->set_control_time(control_time_);
@@ -41,9 +41,56 @@ void TaskMotion::initialize(double control_time_)
 
   current_pose_vector.resize(6);
   current_force_torque_vector.resize(6);
+
+  YAML::Node doc; //
+  try
+  {
+    // load yaml
+    doc = YAML::LoadFile(load_path_.c_str());
+  }catch(const std::exception& e)
+  {
+    std::cout << COLOR_RED_BOLD << "Fail to load data, yaml file!" << COLOR_RESET << std::endl;
+    return;
+  }
+
+  // motion data load initialize//
+  YAML::Node initial_robot_ee_position_node = doc["initial_robot_ee_position"];
+  YAML::Node bigger_pulley_bearing_position_node = doc["bigger_pulley_bearing_position"];
+  YAML::Node task_initial_position_node = doc["task_initial_position"];
+
+
+  for(int num = 0; num < 6; num ++)
+    initial_robot_ee_position.push_back(initial_robot_ee_position_node[num].as<double>());
+
+
+  for(int num = 0; num < 6; num ++)
+    bigger_pulley_bearing_position.push_back(bigger_pulley_bearing_position_node[num].as<double>());
+
+
+  for(int num = 0; num < 6; num ++)
+    task_initial_position.push_back(task_initial_position_node[num].as<double>());
+
+
+  std::cout << initial_robot_ee_position << std::endl;
+  std::cout << bigger_pulley_bearing_position << std::endl;
+  std::cout << task_initial_position << std::endl;
+
+  set_initial_pose(initial_robot_ee_position[0], initial_robot_ee_position[1], initial_robot_ee_position[2], initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]); // set to be robot initial values
+
+  Transform3D<> tf_base_to_bearing;
+  Transform3D<> tf_bearing_to_init;
+  Transform3D<> tf_base_to_init_task;
+
+
+  tf_base_to_bearing = Transform3D<> (Vector3D<>(bigger_pulley_bearing_position[0], bigger_pulley_bearing_position[1], bigger_pulley_bearing_position[2]), EAA<>(bigger_pulley_bearing_position[3], bigger_pulley_bearing_position[4], bigger_pulley_bearing_position[5]).toRotation3D());
+  tf_bearing_to_init = Transform3D<> (Vector3D<>(task_initial_position[0], task_initial_position[1], task_initial_position[2]), EAA<>(task_initial_position[3], task_initial_position[4], task_initial_position[5]).toRotation3D());
+
+  tf_base_to_init_task = tf_base_to_bearing*tf_bearing_to_init;
+
+  std::cout << tf_base_to_init_task << std::endl;
+
+  set_initial_task_pose_eaa(Vector3D<> (tf_base_to_init_task.P())[0], Vector3D<> (tf_base_to_init_task.P())[1], Vector3D<> (tf_base_to_init_task.P())[2], EAA<>(tf_base_to_init_task.R())[0], EAA<>(tf_base_to_init_task.R())[1], EAA<>(tf_base_to_init_task.R())[2]); // set to be robot initial values when the robot starts some tasks.
 }
-
-
 void TaskMotion::robot_initialize() // joint space
 {
 
@@ -369,14 +416,14 @@ std::vector<double> TaskMotion::get_current_pose()
 {
   return current_pose_vector;
 }
-void TaskMotion::set_initial_pose(double x, double y, double z, double roll, double pitch, double yaw)
+void TaskMotion::set_initial_pose(double x, double y, double z, double axis_x, double axis_y, double axis_z)
 {
   current_pose_vector[0] = x;
   current_pose_vector[1] = y;
   current_pose_vector[2] = z;
-  current_pose_vector[3] = roll;
-  current_pose_vector[4] = pitch;
-  current_pose_vector[5] = yaw;
+  current_pose_vector[3] = axis_x;
+  current_pose_vector[4] = axis_y;
+  current_pose_vector[5] = axis_z;
 
   for(int num = 0; num <6 ; num ++)
   {
@@ -406,7 +453,7 @@ void TaskMotion::set_point(double x, double y, double z, double roll, double pit
     desired_pose_matrix(num,7) = time;
   }
 }
-void TaskMotion::set_initial_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z)
+void TaskMotion::set_initial_task_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z)
 {
   tf_initial_pose_ = Transform3D<> (Vector3D<>(x, y, z),
       EAA<>(axis_x, axis_y, axis_z).toRotation3D());
@@ -424,7 +471,6 @@ void TaskMotion::clear_task_motion()
   motion_start_time_vector.clear();
   motion_task_pose_vector.clear();
 }
-
 double TaskMotion::calculate_velocity(double first_point,double second_point, double interval_time)
 {
   return (second_point - first_point)/interval_time;

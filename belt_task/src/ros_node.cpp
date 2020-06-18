@@ -56,8 +56,6 @@ void RosNode::CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPt
 void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
 {
   task_command_ = msg->data;
-  //ur10e_task->clear_task_motion();
-  //ur10e_task->change_motion(task_command);
 }
 void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
