@@ -49,6 +49,7 @@
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
+RT_TASK loop_task_b;
 
 using namespace std;
 using namespace ur_rtde;
@@ -59,6 +60,9 @@ using rw::kinematics::State;
 using rw::loaders::WorkCellLoader;
 
 void initialize();
+
+std::string robot_ip_a;
+std::string robot_ip_b;
 
 //ros
 std::shared_ptr<RosNode> ros_state;
@@ -97,8 +101,11 @@ std::shared_ptr<PID_function> force_y_compensator;
 std::shared_ptr<PID_function> force_z_compensator;
 
 //robot interface
-std::shared_ptr<RTDEReceiveInterface> rtde_receive;
-std::shared_ptr<RTDEControlInterface> rtde_control;
+std::shared_ptr<RTDEReceiveInterface> rtde_receive_a;
+std::shared_ptr<RTDEControlInterface> rtde_control_a;
+
+std::shared_ptr<RTDEReceiveInterface> rtde_receive_b;
+std::shared_ptr<RTDEControlInterface> rtde_control_b;
 
 //robot states
 std::vector<double> joint_positions(6);

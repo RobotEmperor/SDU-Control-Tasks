@@ -29,12 +29,24 @@ void loop_task_proc(void *arg)
   rt_task_set_periodic(NULL, TM_NOW, LOOP_PERIOD);
   tstart = rt_timer_read();
 
+  rtde_receive_a = std::make_shared<RTDEReceiveInterface>(robot_ip_a);
+  rtde_control_a = std::make_shared<RTDEControlInterface>(robot_ip_a);
+
+  rtde_control_a->zeroFtSensor();
+
+  std::cout << COLOR_YELLOW_BOLD << "Robot A connected to your program" << COLOR_RESET << std::endl;
+  std::cout << COLOR_RED_BOLD << "Robot A will move 2 seconds later" << COLOR_RESET << std::endl;
+  usleep(2000000);
+  //rtde_control_a->moveJ(current_q,0.1,0.1); // move to initial pose
+  std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
+  usleep(3000000);
+
   if(!gazebo_check)
   {
     std::cout << COLOR_GREEN_BOLD << "Real robot start " << COLOR_RESET << std::endl;
     //getting sensor values sensor filter
-    acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
-    actual_tcp_pose = rtde_receive->getActualTCPPose();
+    acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
+    actual_tcp_pose = rtde_receive_a->getActualTCPPose();
 
     //data types will be changed
     tool_acc_data_matrix(0,0) = -acutal_tcp_acc[0];
@@ -87,10 +99,10 @@ void loop_task_proc(void *arg)
     if(!gazebo_check)
     {
       //getting sensor values sensor filter
-      raw_ft_data     = rtde_receive->getActualTCPForce();
-      acutal_tcp_acc  = rtde_receive->getActualToolAccelerometer();
-      actual_tcp_pose = rtde_receive->getActualTCPPose();
-      joint_positions = rtde_receive->getActualQ();
+      raw_ft_data     = rtde_receive_a->getActualTCPForce();
+      acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
+      actual_tcp_pose = rtde_receive_a->getActualTCPPose();
+      joint_positions = rtde_receive_a->getActualQ();
 
       //data types will be changed
       for(int var = 0; var < 6; var ++)
@@ -192,7 +204,7 @@ void loop_task_proc(void *arg)
     {
       if(!gazebo_check)
       {
-        //rtde_control->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
+        //rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
       }
       else
       {
@@ -222,10 +234,55 @@ void loop_task_proc(void *arg)
     //check if there is out of the real-time control
     previous_t = (rt_timer_read() - tstart)/1000000.0;
     if(previous_t > 2.0)
-      cout << COLOR_RED_BOLD << "Exceed control time"<< previous_t - 2.0 << COLOR_RESET << endl;
+      cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t - 2.0 << COLOR_RESET << endl;
+
+    cout << COLOR_GREEN_BOLD << "Check A " << COLOR_RESET << endl;
 
     previous_task_command = ros_state->get_task_command();
     ros_state->update_ros_data();
+    rt_task_wait_period(NULL);
+  }
+}
+void loop_task_proc_b(void *arg)
+{
+  RT_TASK *curtask;
+  RT_TASK_INFO curtaskinfo;
+  RTIME tstart;
+
+  curtask = rt_task_self();
+  rt_task_inquire(curtask, &curtaskinfo);
+
+  printf("Robot B Starting task %s with period of %f ms ....\n", curtaskinfo.name, control_time*1000);
+  //Make the task periodic with a specified loop period
+  rt_task_set_periodic(NULL, TM_NOW, LOOP_PERIOD);
+  tstart = rt_timer_read();
+
+  std::cout << COLOR_GREEN_BOLD << "Real robot B start " << COLOR_RESET << std::endl;
+
+  rtde_receive_b = std::make_shared<RTDEReceiveInterface>(robot_ip_b);
+  rtde_control_b = std::make_shared<RTDEControlInterface>(robot_ip_b);
+
+  rtde_control_b->zeroFtSensor();
+
+  std::cout << COLOR_YELLOW_BOLD << "Robot B connected to your program" << COLOR_RESET << std::endl;
+  std::cout << COLOR_RED_BOLD << "Robot B will move 2 seconds later" << COLOR_RESET << std::endl;
+  usleep(2000000);
+  //rtde_control_b->moveJ(current_q,0.1,0.1); // move to initial pose
+  std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
+  usleep(3000000);
+
+  while(1)
+  {
+    static double previous_t = 0.0;
+    tstart = rt_timer_read();
+
+    //check if there is out of the real-time control
+    previous_t = (rt_timer_read() - tstart)/1000000.0;
+    if(previous_t > 2.0)
+      cout << COLOR_RED_BOLD << "Exceed control time B"<< previous_t - 2.0 << COLOR_RESET << endl;
+
+    cout << COLOR_GREEN_BOLD << "Check B " << COLOR_RESET << endl;
+
     rt_task_wait_period(NULL);
   }
 }
@@ -338,19 +395,8 @@ int main (int argc, char **argv)
   }
   else
   {
-    const std::string robot_ip = "192.168.1.130"; // robot B
-
-    rtde_receive = std::make_shared<RTDEReceiveInterface>(robot_ip);
-    rtde_control = std::make_shared<RTDEControlInterface>(robot_ip);
-
-    rtde_control->zeroFtSensor();
-
-    std::cout << COLOR_YELLOW_BOLD << "Robot connected to your program" << COLOR_RESET << std::endl;
-    std::cout << COLOR_RED_BOLD << "Robot will move 2 seconds later" << COLOR_RESET << std::endl;
-    usleep(2000000);
-    rtde_control->moveJ(current_q,0.1,0.1); // move to initial pose
-    std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
-    usleep(2000000);
+    robot_ip_a = "192.168.1.130";
+    robot_ip_b = "192.168.1.130";
   }
   std::cout << COLOR_GREEN << "All of things were initialized!" << COLOR_RESET << std::endl;
 
@@ -359,21 +405,28 @@ int main (int argc, char **argv)
   mlockall(MCL_CURRENT | MCL_FUTURE); //Lock the memory to avoid memory swapping for this program
 
   printf("Starting cyclic task...\n");
+
+  // test multi robot
   sprintf(str, "Belt Task Start");
   rt_task_create(&loop_task, str, 0, 90, 0);//Create the real time task
   rt_task_start(&loop_task, &loop_task_proc, 0);//Since task starts in suspended mode, start task
+
+  sprintf(str, "robot B");
+  rt_task_create(&loop_task_b, str, 0, 90, 0);//Create the real time task
+  rt_task_start(&loop_task_b, &loop_task_proc_b, 0);//Since task starts in suspended mode, start task
 
   std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;
 
   pause();
   rt_task_delete(&loop_task);
+  rt_task_delete(&loop_task_b);
 
   ros_state->shout_down_ros();
   data_log->save_file();
   usleep(3000000);
   if(!gazebo_check)
   {
-    rtde_control->servoStop();
+    rtde_control_a->servoStop();
   }
   return 0;
 }
