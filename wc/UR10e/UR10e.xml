@@ -1,0 +1,34 @@
+<SerialDevice name="UR10e">
+	<Frame name="Base" />
+
+	<!-- Include either DHParam.xml or PosRPYParam.xml -->
+	<Include file="DHParam.xml" />
+
+	<PosLimit refjoint="Joint1" min="-360" max="360" />
+	<PosLimit refjoint="Joint2" min="-360" max="360" />
+	<PosLimit refjoint="Joint3" min="-360" max="360" />
+	<PosLimit refjoint="Joint4" min="-180" max="180" /> <!-- 360 -->
+	<PosLimit refjoint="Joint5" min="-180" max="180" /> <!-- 360 -->
+	<PosLimit refjoint="Joint6" min="-180" max="180" /> <!-- Unlimited! 1080-->
+
+	<VelLimit refjoint="Joint1" max="90" /> <!-- 180 -->
+	<VelLimit refjoint="Joint2" max="90" /> <!-- 180 -->
+	<VelLimit refjoint="Joint3" max="90" /> <!-- 180 -->
+	<VelLimit refjoint="Joint4" max="90" /> <!-- 360 -->
+	<VelLimit refjoint="Joint5" max="90" /> <!-- 360 -->
+	<VelLimit refjoint="Joint6" max="90" /> <!-- 360 -->
+
+	<AccLimit refjoint="Joint1" max="120" />
+	<AccLimit refjoint="Joint2" max="120" />
+	<AccLimit refjoint="Joint3" max="120" />
+	<AccLimit refjoint="Joint4" max="120" />
+	<AccLimit refjoint="Joint5" max="120" />
+	<AccLimit refjoint="Joint6" max="120" />
+
+<!-- Insertion of the geometries are based on: https://www.universal-robots.com/how-tos-and-faqs/faq/ur-faq/parameters-for-calculations-of-kinematics-and-dynamics-45257/ -->
+
+	<ProximitySetup file="ProximitySetup.xml" />
+
+	<Q name="Home">0 -0.7854 0.7854 -1.5708 -1.5708 0</Q>
+
+</SerialDevice>

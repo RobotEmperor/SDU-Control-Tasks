@@ -222,7 +222,7 @@ void loop_task_proc(void *arg)
     //check if there is out of the real-time control
     previous_t = (rt_timer_read() - tstart)/1000000.0;
     if(previous_t > 2.0)
-      cout << previous_t << endl;
+      cout << COLOR_RED_BOLD << "Exceed control time"<< previous_t - 2.0 << COLOR_RESET << endl;
 
     previous_task_command = ros_state->get_task_command();
     ros_state->update_ros_data();
