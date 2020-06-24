@@ -26,7 +26,7 @@ void DataLogging::initialize()
   getActualTCPPose_ = " actual_tcp_pose_x actual_tcp_pose_y actual_tcp_pose_z actual_tcp_pose_eaa_x actual_tcp_pose_eaa_y actual_tcp_pose_eaa_z";
   getActualTCPForceTorque_ = " actual_force_x actual_force_y actual_force_z actual_torque_x actual_torque_x actual_torque_x";
   getFilteredTCPForceTorque_ = " filtered_tcp_force_x filtered_tcp_force_y filtered_tcp_force_z filtered_tcp_torque_x filtered_tcp_torque_y filtered_tcp_torque_z";
-  getContactedForceTorque_ = " tcp_contacted_force_x tcp_contacted_force_y tcp_contacted_force_z tcp_contacted_torque_x tcp_contacted_torque_y tcp_contacted_torque_z";
+  getContactedForceTorque_ = " contacted_force_x contacted_force_y contacted_force_z contacted_torque_x contacted_torque_y contacted_torque_z";
   getActualToolAccelerometer_ = " actual_tcp_acc_x actual_tcp_acc_y actual_tcp_acc_z";
   getActualQ_ = " actual_q_0 actual_q_1 actual_q_2 actual_q_3 actual_q_4 actual_q_5";
 

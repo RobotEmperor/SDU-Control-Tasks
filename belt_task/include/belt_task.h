@@ -44,12 +44,15 @@
 #include "data_logging.h"
 #include "tool_estimation.h"
 
+#include <signal.h> //  our new library
+
 #define WC_FILE "/home/yik/sdu_ws/SDU-Control-Tasks/wc/UR10e_2018/UR10e.xml"
 #define CLOCK_RES 1e-9 //Clock resolution is 1 us by default 1e-9
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
-//RT_TASK loop_task_b;
+RT_TASK loop_task_b;
+RT_TASK loop_task_c;
 
 using namespace std;
 using namespace ur_rtde;
@@ -69,6 +72,7 @@ std::shared_ptr<RosNode> ros_state;
 std::shared_ptr<DataLogging> data_log;
 
 bool gazebo_check;
+bool exit_program;
 
 //model definition
 WorkCell::Ptr wc;

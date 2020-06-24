@@ -68,6 +68,7 @@ void ToolEstimation::initialize()
   f_R_init_ = f_R_init_ * r_;
 
   kf_estimated_force->initialize_system(f_F_init_, f_H_init_, f_Q_init_, f_R_init_, f_B_init_, f_U_init_, f_Z_init_);
+  get_sensor_offset_.assign(6,0);
 }
 
 void ToolEstimation::set_parameters(double control_time_init, double mass_of_tool_init)
@@ -112,7 +113,7 @@ void ToolEstimation::set_sensor_offset_value(std::vector<double> raw_sensor_valu
     get_sensor_offset_.assign(raw_sensor_value.size(), 0);
   }
 
-  if(current_sample_ < num_sample_)
+  if(current_sample_ < num_sample_ - 1)
   {
     for(unsigned int num = 0 ; num < raw_sensor_value.size() ; num ++)
     {
@@ -122,11 +123,11 @@ void ToolEstimation::set_sensor_offset_value(std::vector<double> raw_sensor_valu
   }
   else
   {
-    current_sample_ = 0;
     for(unsigned int num = 0 ; num < raw_sensor_value.size() ; num ++)
     {
-      get_sensor_offset_[num] = raw_sensor_value[num]/(current_sample_ + 1);
+      get_sensor_offset_[num] = get_sensor_offset_[num]/(current_sample_ + 1);
     }
+    current_sample_ = 0;
   }
 }
 void ToolEstimation::process_estimated_force(std::vector<double> ft_data, std::vector<double> linear_acc_data)  // input entire force torque
