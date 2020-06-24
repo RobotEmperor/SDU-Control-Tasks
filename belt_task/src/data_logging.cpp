@@ -25,12 +25,12 @@ void DataLogging::initialize()
   getTargetTCPPose_ = " target_tcp_pose_x target_tcp_pose_y target_tcp_pose_z target_tcp_pose_eaa_x target_tcp_pose_eaa_y target_tcp_pose_eaa_z";
   getActualTCPPose_ = " actual_tcp_pose_x actual_tcp_pose_y actual_tcp_pose_z actual_tcp_pose_eaa_x actual_tcp_pose_eaa_y actual_tcp_pose_eaa_z";
   getActualTCPForceTorque_ = " actual_force_x actual_force_y actual_force_z actual_torque_x actual_torque_x actual_torque_x";
-  getFilteredForceTorque_ = " filtered_force_x filtered_force_y filtered_force_z filtered_torque_x filtered_torque_y filtered_torque_z";
+  getFilteredTCPForceTorque_ = " filtered_tcp_force_x filtered_tcp_force_y filtered_tcp_force_z filtered_tcp_torque_x filtered_tcp_torque_y filtered_tcp_torque_z";
   getContactedForceTorque_ = " tcp_contacted_force_x tcp_contacted_force_y tcp_contacted_force_z tcp_contacted_torque_x tcp_contacted_torque_y tcp_contacted_torque_z";
   getActualToolAccelerometer_ = " actual_tcp_acc_x actual_tcp_acc_y actual_tcp_acc_z";
   getActualQ_ = " actual_q_0 actual_q_1 actual_q_2 actual_q_3 actual_q_4 actual_q_5";
 
-  data_line_ = "time"+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredForceTorque_+getContactedForceTorque_+
+  data_line_ = "time"+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredTCPForceTorque_+getContactedForceTorque_+
       getActualToolAccelerometer_+getActualQ_+"\n";
 
   //out << data_line << std::endl;
@@ -40,7 +40,7 @@ void DataLogging::initialize()
   getTargetTCPPose_ = "";
   getActualTCPPose_ = "";
   getActualTCPForceTorque_ = "";
-  getFilteredForceTorque_ = "";
+  getFilteredTCPForceTorque_ = "";
   getContactedForceTorque_ = "";
   getActualToolAccelerometer_ = "";
   getActualQ_ = "";
@@ -72,9 +72,9 @@ void DataLogging::set_data_getActualTCPForceTorque(std::vector<double> acutal_ft
 {
   getActualTCPForceTorque_ = data_change_to_string(acutal_ft);
 }
-void DataLogging::set_data_getFilteredForceTorque(std::vector<double> filtered_ft)
+void DataLogging::set_data_getFilteredTCPForceTorque(std::vector<double> filtered_tcp_ft)
 {
-  getFilteredForceTorque_ = data_change_to_string(filtered_ft);
+  getFilteredTCPForceTorque_ = data_change_to_string(filtered_tcp_ft);
 }
 void DataLogging::set_data_getContactedForceTorque(std::vector<double> contacted_ft)
 {
@@ -91,7 +91,7 @@ void DataLogging::set_data_getActualToolAccelerometer(std::vector<double> acutal
 }
 void DataLogging::set_data_new_line()
 {
-  data_line_ = time_count_+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredForceTorque_+getContactedForceTorque_+getActualToolAccelerometer_+getActualQ_+"\n";
+  data_line_ = time_count_+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredTCPForceTorque_+getContactedForceTorque_+getActualToolAccelerometer_+getActualQ_+"\n";
 
   out->write(data_line_.c_str(),data_line_.size());
 
@@ -99,7 +99,7 @@ void DataLogging::set_data_new_line()
   getTargetTCPPose_ = "";
   getActualTCPPose_ = "";
   getActualTCPForceTorque_ = "";
-  getFilteredForceTorque_ = "";
+  getFilteredTCPForceTorque_ = "";
   getContactedForceTorque_ = "";
   getActualToolAccelerometer_ = "";
   getActualQ_ = "";

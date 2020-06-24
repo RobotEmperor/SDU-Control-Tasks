@@ -49,7 +49,7 @@
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
-RT_TASK loop_task_b;
+//RT_TASK loop_task_b;
 
 using namespace std;
 using namespace ur_rtde;
@@ -113,7 +113,7 @@ std::vector<double> actual_tcp_pose(6);
 std::vector<double> target_tcp_pose(6);
 std::vector<double> acutal_tcp_acc(3);
 std::vector<double> raw_ft_data(6);
-std::vector<double> filtered_ft_data(6);
+std::vector<double> filtered_tcp_ft_data(6);
 std::vector<double> contacted_ft_data(6);
 std::vector<double> current_q(6);
 

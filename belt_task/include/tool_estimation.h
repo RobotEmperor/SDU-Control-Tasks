@@ -12,11 +12,14 @@
 #include <math.h>
 #include <stdio.h>
 #include <yaml-cpp/yaml.h>
+#include <rw/math.hpp>
 
 #include <Eigen/Dense>
 
 #include "sdu_math/statistics_math.h"
 #include "sensor_filter/sensor_filter.h"
+
+using namespace rw::math;
 
 
 class ToolEstimation
@@ -28,10 +31,14 @@ public:
 
   void set_parameters(double control_time_init, double mass_of_tool_init);
   void set_noise_cov_parameters(double q_noise, double r_noise);
-  void set_orientation_data(Eigen::MatrixXd tf_base_to_tool);
-  void set_gravity_input_data(Eigen::MatrixXd gravity_input);
+  void set_orientation_data(Transform3D<>  tf_base_to_tool);
+  void set_gravity_input_data(std::vector<double> gravity_input);
+  void set_sensor_offset_value(std::vector<double> raw_sensor_value, int num_sample_);
 
-  std::vector<double> get_estimated_force(Eigen::MatrixXd ft_data, Eigen::MatrixXd linear_acc_data);
+  void process_estimated_force(std::vector<double> ft_data, std::vector<double> linear_acc_data);
+
+  std::vector<double> get_contacted_force();
+  std::vector<double> get_sensor_offset_value();
 
 private:
   double control_time_;
@@ -61,6 +68,7 @@ private:
   Eigen::MatrixXd pre_contacted_force_;
 
   std::vector<double> get_contacted_force_;
+  std::vector<double> get_sensor_offset_;
 };
 
 
