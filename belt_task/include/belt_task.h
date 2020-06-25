@@ -36,7 +36,6 @@
 #include <alchemy/task.h>
 #include <alchemy/timer.h>
 
-#include "sdu_sensor/ft_filter.h"
 #include "sdu_math/end_point_to_rad_cal.h"
 #include "sdu_math/control_function.h"
 #include "task_motion.h"
@@ -51,8 +50,8 @@
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
-RT_TASK loop_task_b;
-RT_TASK loop_task_c;
+//RT_TASK loop_task_b;
+//RT_TASK loop_task_c;
 
 using namespace std;
 using namespace ur_rtde;
@@ -122,14 +121,10 @@ std::vector<double> contacted_ft_data(6);
 std::vector<double> current_q(6);
 
 //control states
+std::vector<double> set_point_vector(6);
 std::vector<double> desired_pose_vector(6);
 std::vector<double> desired_force_torque_vector(6);
 std::vector<double> compensated_pose_vector(6);
-
-//matrix type
-Eigen::MatrixXd raw_force_torque_data_matrix;
-Eigen::MatrixXd tool_acc_data_matrix;
-Eigen::MatrixXd tf_current_matrix;
 
 //task motion
 std::string previous_task_command;

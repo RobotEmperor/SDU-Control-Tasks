@@ -255,8 +255,10 @@ void TaskMotion::change_motion(std::string motion_)
     motion_task_pose_vector  = init_motion_task_pose_vector;
     motion_task_init_vel_vector = init_motion_task_init_vel_vector;
     motion_task_final_vel_vector = init_motion_task_final_vel_vector;
+
+    std::cout << "receive initialize command" << std::endl;
   }
-  if(!motion_.compare("initialize_belt_task"))
+  else if(!motion_.compare("initialize_belt_task"))
   {
     base_frame_ = true;
 
@@ -266,8 +268,10 @@ void TaskMotion::change_motion(std::string motion_)
     motion_task_pose_vector  = init_belt_motion_task_pose_vector;
     motion_task_init_vel_vector = init_belt_motion_task_init_vel_vector;
     motion_task_final_vel_vector = init_belt_motion_task_final_vel_vector;
+
+    std::cout << "receive initialize_belt_task command" << std::endl;
   }
-  if(!motion_.compare("tcp_belt_task"))
+  else if(!motion_.compare("tcp_belt_task"))
   {
     all_point = tcp_all_point;
 
@@ -294,7 +298,6 @@ void TaskMotion::change_motion(std::string motion_)
       motion_task_pose_vector[num][5] = EAA<> (tf_desired_pose_.R())[2];
     }
 
-
     //velocity
     for(int num = 0; num < 6; num++)
     {
@@ -309,10 +312,11 @@ void TaskMotion::change_motion(std::string motion_)
     temp_motion_task_vel_vector.clear();
 
     base_frame_ = false;
+
+    std::cout << "receive tcp_belt_task command" << std::endl;
   }
-
-  std::cout << "receive command" << std::endl;
-
+  else
+    std::cout << "invalid command" << std::endl;
 }
 void TaskMotion::run_task_motion()
 {
@@ -407,6 +411,7 @@ void TaskMotion::run_task_motion()
 void TaskMotion::generate_trajectory()
 {
   robot_traj->cal_end_point_to_rad(desired_pose_matrix);
+
   for(int num = 0; num <6 ; num ++)
   {
     current_pose_vector[num] = robot_traj->get_traj_results()(num,0);
@@ -441,6 +446,11 @@ void TaskMotion::set_initial_pose(double x, double y, double z, double axis_x, d
 }
 void TaskMotion::set_point(double x, double y, double z, double roll, double pitch, double yaw, double time)
 {
+  desired_pose_matrix.fill(0);
+  for(int num = 0; num <6 ; num ++)
+  {
+    desired_pose_matrix(num,0) =  current_pose_vector[num];
+  }
   desired_pose_matrix(0,1) = x;
   desired_pose_matrix(1,1) = y;
   desired_pose_matrix(2,1) = z;
@@ -452,6 +462,9 @@ void TaskMotion::set_point(double x, double y, double z, double roll, double pit
   {
     desired_pose_matrix(num,7) = time;
   }
+
+  clear_task_motion();
+  std::cout << "receive set point command" << std::endl;
 }
 void TaskMotion::set_initial_task_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z)
 {
@@ -533,7 +546,29 @@ double TaskMotion::calculate_next_velocity(double first_vel, double second_vel)
   else
     return 0;
 }
+void TaskMotion::tf_set_point_base(std::vector<double> tcp_set_point)
+{
+  static RPY<> tcp_rpy_;
+  set_point_.clear();
 
+  tcp_rpy_ = RPY<>(tcp_set_point[3],tcp_set_point[4],tcp_set_point[5]);
+
+  tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(tcp_set_point[0],tcp_set_point[1],tcp_set_point[2]),
+      tcp_rpy_.toRotation3D());
+
+  tf_desired_pose_ = tf_current_pose_* tf_tcp_desired_pose_;
+
+  set_point_.push_back(Vector3D<> (tf_desired_pose_.P())[0]);
+  set_point_.push_back(Vector3D<> (tf_desired_pose_.P())[1]);
+  set_point_.push_back(Vector3D<> (tf_desired_pose_.P())[2]);
+  set_point_.push_back(EAA<> (tf_desired_pose_.R())[0]);
+  set_point_.push_back(EAA<> (tf_desired_pose_.R())[1]);
+  set_point_.push_back(EAA<> (tf_desired_pose_.R())[2]);
+}
+std::vector<double> TaskMotion::get_set_point_base()
+{
+  return set_point_;
+}
 std::vector<double> TaskMotion::get_desired_force_torque()
 {
   return current_force_torque_vector;

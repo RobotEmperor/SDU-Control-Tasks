@@ -35,23 +35,18 @@ void RosNode::initialize()
   command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::CommandDataMsgCallBack, this);
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
+
+  set_point_.assign(7,0);
 }
 void RosNode::CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
-//  for(int num = 0; num < 6 ; num++)
-//  {
-//    desired_pose_matrix(num,1) = msg->data[num];
-//  }
-//  if(msg->data[6] <= 0)
-//    return;
-//
-//  for(int num = 0; num < 6 ; num++)
-//  {
-//    motion_time =  msg->data[6];
-//  }
-//
-//  task_command = "";
-//  ur10e_task->set_point(msg->data[0], msg->data[1], msg->data[2], msg->data[3], msg->data[4], msg->data[5], msg->data[6]);
+  if(msg->data[7] <= 0)
+    return;
+
+  task_command_ = "set_point";
+
+  for(unsigned int num = 0; num < 7; num ++)
+    set_point_[num] = msg->data[num];
 }
 void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
 {
@@ -137,6 +132,14 @@ void RosNode::shout_down_ros()
 std::string RosNode::get_task_command()
 {
   return task_command_;
+}
+std::vector<double> RosNode::get_set_point()
+{
+  return set_point_;
+}
+void RosNode::clear_task_command ()
+{
+  task_command_ = "";
 }
 double RosNode::get_p_gain()
 {

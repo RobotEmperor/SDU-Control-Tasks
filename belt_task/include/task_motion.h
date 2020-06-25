@@ -61,6 +61,9 @@ public:
 
   void change_motion(std::string motion_);
 
+  void tf_set_point_base(std::vector<double> tcp_set_point);
+
+  std::vector<double> get_set_point_base();
   std::vector<double> get_current_pose();
   std::vector<double> get_desired_force_torque();
 
@@ -81,6 +84,7 @@ private:
   std::vector<double> initial_robot_ee_position;
   std::vector<double> bigger_pulley_bearing_position;
   std::vector<double> task_initial_position;
+  std::vector<double> set_point_;
 
   //modified robot position (in relative to base)
   std::map<int, std::vector<double>> motion_start_time_vector;
