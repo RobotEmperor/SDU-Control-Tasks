@@ -119,10 +119,17 @@ void loop_task_proc(void *arg)
       filtered_tcp_ft_data[4] = tf_tcp_current_force.torque()[1];
       filtered_tcp_ft_data[5] = tf_tcp_current_force.torque()[2];
     }
+    pid_compensation[0] = force_x_compensator->get_final_output();
+    pid_compensation[1] = force_y_compensator->get_final_output();
+    pid_compensation[2] = force_z_compensator->get_final_output();
+    pid_compensation[3] = 0;
+    pid_compensation[4] = 0;
+    pid_compensation[5] = 0;
 
-    compensated_pose_vector[0] = desired_pose_vector[0]; //+ force_x_compensator->get_final_output();
-    compensated_pose_vector[1] = desired_pose_vector[1]; //+ force_y_compensator->get_final_output();
-    compensated_pose_vector[2] = desired_pose_vector[2]; //+ force_x_compensator->get_final_output();
+
+    compensated_pose_vector[0] = desired_pose_vector[0] + pid_compensation[0];
+    compensated_pose_vector[1] = desired_pose_vector[1] + pid_compensation[1];
+    compensated_pose_vector[2] = desired_pose_vector[2] + pid_compensation[2];
 
     compensated_pose_vector[3] = desired_pose_vector[3]; //+ force_x_compensator->get_final_output();
     compensated_pose_vector[4] = desired_pose_vector[4]; //+ force_x_compensator->get_final_output();
@@ -176,7 +183,7 @@ void loop_task_proc(void *arg)
         //rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
         //check if there is out of the real-time control
         previous_t = (rt_timer_read() - tstart)/1000000.0;
-        if(previous_t > 1)
+        if(previous_t > 2)
           cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
       }
       else
@@ -201,6 +208,7 @@ void loop_task_proc(void *arg)
     data_log->set_data_getActualToolAccelerometer(acutal_tcp_acc);
     data_log->set_data_getFilteredTCPForceTorque(filtered_tcp_ft_data);
     data_log->set_data_getContactedForceTorque(contacted_ft_data);
+    data_log->set_data_getPidCompensation(pid_compensation);
     data_log->set_data_new_line();
 
     previous_task_command = ros_state->get_task_command();
@@ -339,7 +347,7 @@ int main (int argc, char **argv)
     std::cout << COLOR_YELLOW_BOLD << "Robot A connected to your program" << COLOR_RESET << std::endl;
     std::cout << COLOR_RED_BOLD << "Robot A will move 2 seconds later" << COLOR_RESET << std::endl;
     usleep(2000000);
-    //rtde_control_a->moveJ(current_q,0.1,0.1); // move to initial pose
+    rtde_control_a->moveJ(current_q,0.1,0.1); // move to initial pose
     std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
     usleep(3000000);
   }
@@ -367,7 +375,7 @@ int main (int argc, char **argv)
   usleep(3000000);
   if(!gazebo_check)
   {
-    //rtde_control_a->servoStop();
+    rtde_control_a->servoStop();
   }
   return 0;
 }

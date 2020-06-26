@@ -119,6 +119,7 @@ std::vector<double> raw_ft_data(6);
 std::vector<double> filtered_tcp_ft_data(6);
 std::vector<double> contacted_ft_data(6);
 std::vector<double> current_q(6);
+std::vector<double> pid_compensation(6);
 
 //control states
 std::vector<double> set_point_vector(6);

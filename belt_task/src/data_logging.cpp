@@ -29,9 +29,10 @@ void DataLogging::initialize()
   getContactedForceTorque_ = " contacted_force_x contacted_force_y contacted_force_z contacted_torque_x contacted_torque_y contacted_torque_z";
   getActualToolAccelerometer_ = " actual_tcp_acc_x actual_tcp_acc_y actual_tcp_acc_z";
   getActualQ_ = " actual_q_0 actual_q_1 actual_q_2 actual_q_3 actual_q_4 actual_q_5";
+  getPidCompensation_ = " x_compensation y_compensation z_compensation eaa_x_compensation eaa_y_compensation eaa_z_compensation";
 
   data_line_ = "time"+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredTCPForceTorque_+getContactedForceTorque_+
-      getActualToolAccelerometer_+getActualQ_+"\n";
+      getActualToolAccelerometer_+getActualQ_+getPidCompensation_+"\n";
 
   //out << data_line << std::endl;
   out->write(data_line_.c_str(),data_line_.size());
@@ -44,6 +45,7 @@ void DataLogging::initialize()
   getContactedForceTorque_ = "";
   getActualToolAccelerometer_ = "";
   getActualQ_ = "";
+  getPidCompensation_ = "";
 
 }
 void DataLogging::save_file()
@@ -80,6 +82,11 @@ void DataLogging::set_data_getContactedForceTorque(std::vector<double> contacted
 {
   getContactedForceTorque_ = data_change_to_string(contacted_ft);
 }
+void DataLogging::set_data_getPidCompensation(std::vector<double> pid_compensation)
+{
+  getPidCompensation_ = data_change_to_string(pid_compensation);
+
+}
 void DataLogging::set_data_getActualToolAccelerometer(std::vector<double> acutal_acc)
 {
   if(acutal_acc.size() == 0)
@@ -91,7 +98,7 @@ void DataLogging::set_data_getActualToolAccelerometer(std::vector<double> acutal
 }
 void DataLogging::set_data_new_line()
 {
-  data_line_ = time_count_+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredTCPForceTorque_+getContactedForceTorque_+getActualToolAccelerometer_+getActualQ_+"\n";
+  data_line_ = time_count_+getTargetTCPPose_+getActualTCPPose_+getActualTCPForceTorque_+getFilteredTCPForceTorque_+getContactedForceTorque_+getActualToolAccelerometer_+getActualQ_+getPidCompensation_+"\n";
 
   out->write(data_line_.c_str(),data_line_.size());
 
@@ -103,6 +110,7 @@ void DataLogging::set_data_new_line()
   getContactedForceTorque_ = "";
   getActualToolAccelerometer_ = "";
   getActualQ_ = "";
+  getPidCompensation_ = "";
 }
 std::string DataLogging::data_change_to_string(std::vector<double> data)
 {
