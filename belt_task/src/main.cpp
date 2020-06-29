@@ -104,9 +104,9 @@ void loop_task_proc(void *arg)
       force_y_compensator->set_pid_gain(f_kp,f_ki,f_kd);
       force_z_compensator->set_pid_gain(f_kp,f_ki,f_kd);
 
-      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],contacted_ft_data[0]);
-      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],contacted_ft_data[1]);
-      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],contacted_ft_data[2]);
+      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],contacted_ft_data[0],0.1);
+      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],contacted_ft_data[1],0.1);
+      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],contacted_ft_data[2],0.1);
 
       current_ft = Wrench6D<> (contacted_ft_data[0], contacted_ft_data[1], contacted_ft_data[2], contacted_ft_data[3], contacted_ft_data[4], contacted_ft_data[5]);
 
