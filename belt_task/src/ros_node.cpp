@@ -11,9 +11,9 @@ RosNode::RosNode(int argc, char **argv, std::string node_name)
 {
   ros::init(argc, argv, node_name);
   task_command_ = "";
-  gain_k_ = 0;
-  gain_i_ = 0;
   gain_p_ = 0;
+  gain_i_ = 0;
+  gain_d_ = 0;
 }
 RosNode::~RosNode()
 {
@@ -24,6 +24,7 @@ void RosNode::initialize()
 
   raw_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/raw_force_torque_data", 10);
   filtered_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/filtered_force_torque_data", 10);
+  pid_compensation_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/pud_compensation_data", 10);
 
   gazebo_shoulder_pan_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_pan_position/command", 10);
   gazebo_shoulder_lift_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_lift_position/command", 10);
@@ -54,20 +55,20 @@ void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
 }
 void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
-  gain_k_ = msg->data[0];
+  gain_p_ = msg->data[0];
   gain_i_ = msg->data[1];
-  gain_p_ = msg->data[2];
+  gain_d_ = msg->data[2];
 
   YAML::Emitter y_out;
   std::string path_ = "../config/force_pid_gain.yaml";
 
   y_out << YAML::BeginMap;
   y_out << YAML::Key << "p_gain";
-  y_out << YAML::Value << gain_k_;
+  y_out << YAML::Value << gain_p_;
   y_out << YAML::Key << "i_gain";
   y_out << YAML::Value << gain_i_;
   y_out << YAML::Key << "d_gain";
-  y_out << YAML::Value << gain_p_;
+  y_out << YAML::Value << gain_d_;
   y_out << YAML::EndMap;
   std::ofstream fout(path_.c_str());
   fout << y_out.c_str(); // dump it back into the file
@@ -115,6 +116,19 @@ void RosNode::send_filtered_ft_data (std::vector<double> filtered_ft_data)
 
   filtered_force_torque_msg_.data.clear();
 }
+void RosNode::send_pid_compensation_data (std::vector<double> pid_compensation_data)
+{
+  pid_compensation_msg_.data.push_back(pid_compensation_data[0]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[1]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[2]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[3]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[4]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[5]);
+
+  pid_compensation_pub_.publish(pid_compensation_msg_);
+
+  pid_compensation_msg_.data.clear();
+}
 void RosNode::update_ros_data()
 {
   ros::spinOnce();
@@ -143,7 +157,7 @@ void RosNode::clear_task_command ()
 }
 double RosNode::get_p_gain()
 {
-  return gain_k_;
+  return gain_p_;
 }
 double RosNode::get_i_gain()
 {
@@ -151,5 +165,5 @@ double RosNode::get_i_gain()
 }
 double RosNode::get_d_gain()
 {
-  return gain_p_;
+  return gain_d_;
 }

@@ -99,6 +99,10 @@ void loop_task_proc(void *arg)
 
       contacted_ft_data = tool_estimation->get_contacted_force();
 
+      f_kp = ros_state->get_p_gain();
+      f_ki = ros_state->get_i_gain();
+      f_kd = ros_state->get_d_gain();
+
       //controller for force compensation
       force_x_compensator->set_pid_gain(f_kp,f_ki,f_kd);
       force_y_compensator->set_pid_gain(f_kp,f_ki,f_kd);
@@ -180,7 +184,7 @@ void loop_task_proc(void *arg)
     {
       if(!gazebo_check)
       {
-        //rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
+        rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
         //check if there is out of the real-time control
         previous_t = (rt_timer_read() - tstart)/1000000.0;
         if(previous_t > 2)
@@ -198,6 +202,7 @@ void loop_task_proc(void *arg)
 
     ros_state->send_raw_ft_data(raw_ft_data);
     ros_state->send_filtered_ft_data(contacted_ft_data);
+    ros_state->send_pid_compensation_data(pid_compensation);
 
     //data log save
     data_log->set_time_count(time_count);
@@ -249,9 +254,9 @@ void initialize()
   ur10e_task->initialize(control_time, path_);
 
   //control
-  force_x_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
-  force_y_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
-  force_z_compensator = std::make_shared<PID_function>(control_time, 0.0025, -0.0025, 0, 0, 0, 0.00001, -0.00001);
+  force_x_compensator = std::make_shared<PID_function>(control_time, 0.0035, -0.0035, 0, 0, 0, 0.0000001, -0.0000001);
+  force_y_compensator = std::make_shared<PID_function>(control_time, 0.0035, -0.0035, 0, 0, 0, 0.0000001, -0.0000001);
+  force_z_compensator = std::make_shared<PID_function>(control_time, 0.0035, -0.0035, 0, 0, 0, 0.0000001, -0.0000001);
 
   //robot A
   desired_pose_vector = ur10e_task -> get_current_pose();

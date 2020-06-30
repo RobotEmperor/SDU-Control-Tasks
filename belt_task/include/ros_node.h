@@ -40,6 +40,7 @@ public:
   void send_gazebo_command (std::vector<double> gazebo_command);
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
+  void send_pid_compensation_data (std::vector<double> pid_compensation_data);
   void clear_task_command ();
 
   std::vector<double> get_set_point();
@@ -51,13 +52,14 @@ public:
 
 private:
 
-  double gain_k_, gain_i_, gain_p_;
+  double gain_p_, gain_i_, gain_d_;
   std::string task_command_;
 
   std::vector<double> set_point_;
 
   ros::Publisher raw_force_torque_pub_;
   ros::Publisher filtered_force_torque_pub_;
+  ros::Publisher pid_compensation_pub_;
   ros::Publisher gazebo_shoulder_pan_position_pub_;
   ros::Publisher gazebo_shoulder_lift_position_pub_;
   ros::Publisher gazebo_elbow_position_pub_;
@@ -71,6 +73,7 @@ private:
 
   std_msgs::Float64MultiArray raw_force_torque_msg_;
   std_msgs::Float64MultiArray filtered_force_torque_msg_;
+  std_msgs::Float64MultiArray pid_compensation_msg_;
 
   std_msgs::Float64 gazebo_shoulder_pan_position_msg_;
   std_msgs::Float64 gazebo_shoulder_lift_position_msg_;
