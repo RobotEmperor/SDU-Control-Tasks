@@ -14,6 +14,7 @@ RosNode::RosNode(int argc, char **argv, std::string node_name)
   gain_p_ = 0;
   gain_i_ = 0;
   gain_d_ = 0;
+  test_ = false;
 }
 RosNode::~RosNode()
 {
@@ -33,9 +34,12 @@ void RosNode::initialize()
   gazebo_wrist_2_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/wrist_2_position/command", 10);
   gazebo_wrist_3_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/wrist_3_position/command", 10);
 
+
   command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::CommandDataMsgCallBack, this);
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
+
+  test_sub_ =  nh.subscribe("/sdu/ur10e/test", 10, &RosNode::TestMsgCallBack, this);
 
   set_point_.assign(7,0);
 }
@@ -72,6 +76,11 @@ void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::Cons
   y_out << YAML::EndMap;
   std::ofstream fout(path_.c_str());
   fout << y_out.c_str(); // dump it back into the file
+}
+void RosNode::TestMsgCallBack (const std_msgs::Bool::ConstPtr& msg)
+{
+  test_ = msg->data;
+  std::cout << "test!!!!!!!!" << test_ << std::endl;
 }
 void RosNode::send_gazebo_command (std::vector<double> gazebo_command)
 {
@@ -139,6 +148,7 @@ void RosNode::shout_down_ros()
   command_sub_.shutdown();
   task_command_sub_.shutdown();
   pid_gain_command_sub_.shutdown();
+  test_sub_.shutdown();
   //
 
   ros::shutdown();
@@ -166,4 +176,8 @@ double RosNode::get_i_gain()
 double RosNode::get_d_gain()
 {
   return gain_d_;
+}
+bool RosNode::get_test()
+{
+  return test_;
 }

@@ -33,8 +33,8 @@ void loop_task_proc(void *arg)
   {
     std::cout << COLOR_GREEN_BOLD << "Real robot start " << COLOR_RESET << std::endl;
     //getting sensor values sensor filter
-    acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
-    actual_tcp_pose = rtde_receive_a->getActualTCPPose();
+    //acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
+    //actual_tcp_pose = rtde_receive_a->getActualTCPPose();
 
     tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
 
@@ -60,13 +60,19 @@ void loop_task_proc(void *arg)
     //run motion trajectory task_motion
     ur10e_task->set_current_pose_eaa(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2],compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]);
 
-    if(!ros_state->get_task_command().compare("set_point"))
+    //auto_task_motion
+    if(!ros_state->get_task_command().compare("auto"))
+    {
+      ur10e_task->auto_task_motion(contact_check);
+    }
+    else if(!ros_state->get_task_command().compare("set_point"))
     {
       static double set_point_motion_time_ = 0.0;
       set_point_motion_time_ = ros_state->get_set_point()[6];
       ur10e_task->tf_set_point_base(ros_state->get_set_point());
       set_point_vector = ur10e_task->get_set_point_base();
       ur10e_task->set_point(set_point_vector[0], set_point_vector[1], set_point_vector[2], set_point_vector[3], set_point_vector[4], set_point_vector[5], set_point_motion_time_);
+      ur10e_task->generate_trajectory();
     }
     else
     {
@@ -76,8 +82,9 @@ void loop_task_proc(void *arg)
         ur10e_task->change_motion(ros_state->get_task_command());
       }
       ur10e_task->run_task_motion();
+      ur10e_task->generate_trajectory();
     }
-    ur10e_task->generate_trajectory();
+
 
     //motion reference
     desired_pose_vector = ur10e_task->get_current_pose();
@@ -85,11 +92,12 @@ void loop_task_proc(void *arg)
 
     if(!gazebo_check)
     {
+      double tcp_contact_force_norm_ = 0;
       //getting sensor values sensor filter
-      raw_ft_data     = rtde_receive_a->getActualTCPForce();
-      acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
-      actual_tcp_pose = rtde_receive_a->getActualTCPPose();
-      joint_positions = rtde_receive_a->getActualQ();
+      //raw_ft_data     = rtde_receive_a->getActualTCPForce();
+      //acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
+      //actual_tcp_pose = rtde_receive_a->getActualTCPPose();
+      //joint_positions = rtde_receive_a->getActualQ();
 
       tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
 
@@ -108,24 +116,43 @@ void loop_task_proc(void *arg)
       force_y_compensator->set_pid_gain(f_kp,f_ki,f_kd);
       force_z_compensator->set_pid_gain(f_kp,f_ki,f_kd);
 
-      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],contacted_ft_data[0],0.1);
-      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],contacted_ft_data[1],0.1);
-      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],contacted_ft_data[2],0.1);
-
       current_ft = Wrench6D<> (contacted_ft_data[0], contacted_ft_data[1], contacted_ft_data[2], contacted_ft_data[3], contacted_ft_data[4], contacted_ft_data[5]);
 
-      tf_tcp_current_force = (tf_current.R()).inverse()*current_ft;
+      // tcp frame
+      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0.1);
+      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0.1);
+      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0.1);
 
-      filtered_tcp_ft_data[0] = tf_tcp_current_force.force()[0];
-      filtered_tcp_ft_data[1] = tf_tcp_current_force.force()[1];
-      filtered_tcp_ft_data[2] = tf_tcp_current_force.force()[2];
-      filtered_tcp_ft_data[3] = tf_tcp_current_force.torque()[0];
-      filtered_tcp_ft_data[4] = tf_tcp_current_force.torque()[1];
-      filtered_tcp_ft_data[5] = tf_tcp_current_force.torque()[2];
+      //tf_tcp_current_force = (tf_current.R()).inverse()*current_ft;
+
+      force_x_compensator->get_final_output();
+      force_y_compensator->get_final_output();
+      force_z_compensator->get_final_output();
+
+      tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
+
+      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,-tcp_contact_force_norm_), EAA<>(0,0,0).toRotation3D());
+
+      tf_modified_pose = tf_current * tf_tcp_desired_pose;
+
+      filtered_tcp_ft_data[0] = current_ft.force()[0];
+      filtered_tcp_ft_data[1] = current_ft.force()[1];
+      filtered_tcp_ft_data[2] = current_ft.force()[2];
+      filtered_tcp_ft_data[3] = current_ft.torque()[0];
+      filtered_tcp_ft_data[4] = current_ft.torque()[1];
+      filtered_tcp_ft_data[5] = current_ft.torque()[2];
+
+      contact_check = ros_state->get_test();
+      //contact_check = statistics_math->calculate_cusum(contacted_ft_data[2], 0.01, 10, -10);
     }
-    pid_compensation[0] = force_x_compensator->get_final_output();
-    pid_compensation[1] = force_y_compensator->get_final_output();
-    pid_compensation[2] = force_z_compensator->get_final_output();
+    else
+    {
+      contact_check = ros_state->get_test();
+    }
+
+    pid_compensation[0] = Vector3D<> (tf_modified_pose.P())[0];
+    pid_compensation[1] = Vector3D<> (tf_modified_pose.P())[1];
+    pid_compensation[2] = Vector3D<> (tf_modified_pose.P())[2];
     pid_compensation[3] = 0;
     pid_compensation[4] = 0;
     pid_compensation[5] = 0;
@@ -143,6 +170,7 @@ void loop_task_proc(void *arg)
         EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
 
     //solve ik problem
+
     solutions = solver.solve(tf_desired, state);
 
     //from covid - robot
@@ -169,22 +197,22 @@ void loop_task_proc(void *arg)
     }
 
     //check velocity
-    for(int num = 0; num <6 ; num ++)
-    {
-      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 45*DEGREE2RADIAN)
-      {
-        cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
-        std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
-        joint_vel_limits = true;
-      }
-    }
+    //    for(int num = 0; num <6 ; num ++)
+    //    {
+    //      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 45*DEGREE2RADIAN)
+    //      {
+    //        cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
+    //        std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
+    //        joint_vel_limits = true;
+    //      }
+    //    }
 
     //send command in joint space to ur robot or gazebo
     if(!joint_vel_limits)
     {
       if(!gazebo_check)
       {
-        rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
+        //rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,100);
         //check if there is out of the real-time control
         previous_t = (rt_timer_read() - tstart)/1000000.0;
         if(previous_t > 2)
@@ -207,7 +235,7 @@ void loop_task_proc(void *arg)
     //data log save
     data_log->set_time_count(time_count);
     data_log->set_data_getActualQ(joint_positions);
-    data_log->set_data_getActualTCPPose(actual_tcp_pose);
+    data_log->set_data_getActualTCPPose(compensated_pose_vector);
     data_log->set_data_getTargetTCPPose(target_tcp_pose);
     data_log->set_data_getActualTCPForceTorque(raw_ft_data);
     data_log->set_data_getActualToolAccelerometer(acutal_tcp_acc);
@@ -217,13 +245,17 @@ void loop_task_proc(void *arg)
     data_log->set_data_new_line();
 
     previous_task_command = ros_state->get_task_command();
-    ros_state->clear_task_command();
 
-//    previous_t = (rt_timer_read() - tstart)/1000000.0;
-//    if(previous_t > 1)
-//      cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
-//    else
-//      cout << COLOR_GREEN_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    previous_t = (rt_timer_read() - tstart)/1000000.0;
+    if(previous_t > 2)
+      cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //ros_state->clear_task_command();
+
+    //    previous_t = (rt_timer_read() - tstart)/1000000.0;
+    //    if(previous_t > 1)
+    //      cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //    else
+    //      cout << COLOR_GREEN_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
 
     rt_task_wait_period(NULL);
   }
@@ -243,6 +275,11 @@ void initialize()
   //tool_estimation
   tool_estimation = std::make_shared<ToolEstimation>();
   tool_estimation->initialize();
+
+  contact_check = false;
+
+  //statistics
+  statistics_math = std::make_shared<StatisticsMath>();
 
   // fifth order traj
   ur10e_traj = std::make_shared<EndEffectorTraj>();
@@ -335,9 +372,9 @@ int main (int argc, char **argv)
     robot_ip_a = "192.168.1.130";
     //robot_ip_b = "192.168.1.129";
 
-    rtde_receive_a = std::make_shared<RTDEReceiveInterface>(robot_ip_a);
-    rtde_control_a = std::make_shared<RTDEControlInterface>(robot_ip_a);
-    rtde_control_a->zeroFtSensor();
+    //rtde_receive_a = std::make_shared<RTDEReceiveInterface>(robot_ip_a);
+    //rtde_control_a = std::make_shared<RTDEControlInterface>(robot_ip_a);
+    //rtde_control_a->zeroFtSensor();
 
     // set ft sensor offset value
     //    static int current_num_sample = 0;
@@ -352,7 +389,7 @@ int main (int argc, char **argv)
     std::cout << COLOR_YELLOW_BOLD << "Robot A connected to your program" << COLOR_RESET << std::endl;
     std::cout << COLOR_RED_BOLD << "Robot A will move 2 seconds later" << COLOR_RESET << std::endl;
     usleep(2000000);
-    rtde_control_a->moveJ(current_q,0.1,0.1); // move to initial pose
+    //rtde_control_a->moveJ(current_q,0.1,0.1); // move to initial pose
     std::cout << COLOR_RED_BOLD << "Send" << COLOR_RESET << std::endl;
     usleep(3000000);
   }
@@ -380,7 +417,7 @@ int main (int argc, char **argv)
   usleep(3000000);
   if(!gazebo_check)
   {
-    rtde_control_a->servoStop();
+    //rtde_control_a->servoStop();
   }
   return 0;
 }

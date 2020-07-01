@@ -38,6 +38,7 @@
 
 #include "sdu_math/end_point_to_rad_cal.h"
 #include "sdu_math/control_function.h"
+#include "sdu_math/statistics_math.h"
 #include "task_motion.h"
 #include "ros_node.h"
 #include "data_logging.h"
@@ -87,6 +88,8 @@ double f_kp;
 double f_ki;
 double f_kd;
 
+bool contact_check;
+
 //solution check
 bool joint_vel_limits;
 std::vector<Q> solutions;
@@ -97,6 +100,9 @@ std::shared_ptr<TaskMotion> ur10e_task;
 
 //tool estimation
 std::shared_ptr<ToolEstimation> tool_estimation;
+
+//cusum_method
+std::shared_ptr<StatisticsMath> statistics_math;
 
 //pid controller
 std::shared_ptr<PID_function> force_x_compensator;
@@ -132,6 +138,7 @@ std::string previous_task_command;
 
 //tf
 rw::math::Transform3D<> tf_tcp_desired_pose;
+rw::math::Transform3D<> tf_modified_pose;
 rw::math::Transform3D<> tf_current;
 rw::math::Transform3D<> tf_desired;
 

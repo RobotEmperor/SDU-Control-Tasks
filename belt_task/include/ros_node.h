@@ -41,12 +41,17 @@ public:
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
   void send_pid_compensation_data (std::vector<double> pid_compensation_data);
+
   void clear_task_command ();
+
+  void TestMsgCallBack (const std_msgs::Bool::ConstPtr& msg);
 
   std::vector<double> get_set_point();
   double get_p_gain();
   double get_i_gain();
   double get_d_gain();
+
+  bool get_test();
 
   std::string get_task_command();
 
@@ -71,6 +76,8 @@ private:
   ros::Subscriber task_command_sub_;
   ros::Subscriber pid_gain_command_sub_;
 
+  ros::Subscriber test_sub_;
+
   std_msgs::Float64MultiArray raw_force_torque_msg_;
   std_msgs::Float64MultiArray filtered_force_torque_msg_;
   std_msgs::Float64MultiArray pid_compensation_msg_;
@@ -82,7 +89,8 @@ private:
   std_msgs::Float64 gazebo_wrist_2_position_msg_;
   std_msgs::Float64 gazebo_wrist_3_position_msg_;
 
-
+  //test
+  bool test_;
 };
 
 
