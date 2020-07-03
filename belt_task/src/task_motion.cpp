@@ -357,9 +357,9 @@ void TaskMotion::auto_task_motion(bool contact_)
 
     for(int num = 0; num <6; num ++)
     {
-      desired_pose_matrix(num,7) = 7;
+      desired_pose_matrix(num,7) = 15;
     }
-    generate_trajectory();
+    //generate_trajectory();
 
     if(contact_)
     {
@@ -391,7 +391,8 @@ void TaskMotion::auto_task_motion(bool contact_)
       desired_pose_matrix(num,7) = 10;
     }
 
-    generate_trajectory();
+    //generate_trajectory();
+
     if (!contact_ || path_y_ < -0.03)
     {
       tf_contact_point_to_non_contact_point_.P() = tf_base_to_contact_point_.P() - tf_current_pose_.P();
@@ -439,28 +440,42 @@ void TaskMotion::auto_task_motion(bool contact_)
       stop_motion();
       phases_ ++;
     }
+
+    set_initial_pose(current_pose_vector[0], current_pose_vector[1], current_pose_vector[2], current_pose_vector[3], current_pose_vector[4], current_pose_vector[5]);
+    //robot_traj->cal_end_point_to_rad(desired_pose_matrix);
   }
   if(phases_ == 3)
   {
-//    desired_pose_matrix(0,1) = init_belt_motion_task_pose_vector[0][0];
-//    desired_pose_matrix(1,1) = init_belt_motion_task_pose_vector[0][1];
-//    desired_pose_matrix(2,1) = init_belt_motion_task_pose_vector[0][2];
-//
-//    desired_pose_matrix(3,1) = init_belt_motion_task_pose_vector[0][3];
-//    desired_pose_matrix(4,1) = init_belt_motion_task_pose_vector[0][4];
-//    desired_pose_matrix(5,1) = init_belt_motion_task_pose_vector[0][5];
-//
-//    desired_pose_matrix(0,7) = 7;
-//    desired_pose_matrix(1,7) = 7;
-//    desired_pose_matrix(2,7) = 7;
-//
-//    desired_pose_matrix(3,7) = 7;
-//    desired_pose_matrix(4,7) = 7;
-//    desired_pose_matrix(5,7) = 7;
-//    std::cout << "Move to the initial pose" << std::endl;
-//    generate_trajectory();
-//    if(!robot_traj->is_moving_check)
-//      phases_ ++;
+    //generate_trajectory();
+    //    desired_pose_matrix(0,1) = init_belt_motion_task_pose_vector[0][0];
+    //    desired_pose_matrix(1,1) = init_belt_motion_task_pose_vector[0][1];
+    //    desired_pose_matrix(2,1) = init_belt_motion_task_pose_vector[0][2];
+    //
+    //    desired_pose_matrix(3,1) = init_belt_motion_task_pose_vector[0][3];
+    //    desired_pose_matrix(4,1) = init_belt_motion_task_pose_vector[0][4];
+    //    desired_pose_matrix(5,1) = init_belt_motion_task_pose_vector[0][5];
+    //
+    //    desired_pose_matrix(0,7) = 7;
+    //    desired_pose_matrix(1,7) = 7;
+    //    desired_pose_matrix(2,7) = 7;
+    //
+    //    desired_pose_matrix(3,7) = 7;
+    //    desired_pose_matrix(4,7) = 7;
+    //    desired_pose_matrix(5,7) = 7;
+    //    std::cout << "Move to the initial pose" << std::endl;
+    //    generate_trajectory();
+    //    if(!robot_traj->is_moving_check)
+    //      phases_ ++;
+  }
+
+  robot_traj->cal_end_point_to_rad(desired_pose_matrix);
+
+  if(phases_ == 0|| phases_ == 1 || phases_ == 2)
+  {
+    for(int num = 0; num <6 ; num ++)
+    {
+      current_pose_vector[num] = robot_traj->get_traj_results()(num,0);
+    }
   }
 }
 void TaskMotion::run_task_motion()
@@ -507,7 +522,7 @@ void TaskMotion::run_task_motion()
     if(current_point > all_point)
     {
       check_change = robot_traj->is_moving_check;
-      std::cout << "Finished motion" << std::endl;
+      std::cout << "Finished motion!" << std::endl;
       task_done = true;
       return;
     }
@@ -536,7 +551,6 @@ void TaskMotion::run_task_motion()
   }
   else // during motion
   {
-
   }
 
   if(!base_frame_)
@@ -544,11 +558,11 @@ void TaskMotion::run_task_motion()
     tf_tcp_desired_force_ = Wrench6D<> (tcp_motion_desired_force_vector[current_point][0], tcp_motion_desired_force_vector[current_point][1], tcp_motion_desired_force_vector[current_point][2],
         tcp_motion_desired_force_vector[current_point][3], tcp_motion_desired_force_vector[current_point][4], tcp_motion_desired_force_vector[current_point][5]);
 
-    //tf_force_desired_ = tf_current_pose_.R()*tf_tcp_desired_force_;
+    tf_force_desired_ = tf_current_pose_.R()*tf_tcp_desired_force_;
 
     for(int num = 0; num <3; num ++)
     {
-      current_force_torque_vector[num] = tf_tcp_desired_force_.force()[num];
+      current_force_torque_vector[num] = tf_force_desired_.force()[num];
     }
   }
   check_change = robot_traj->is_moving_check;
@@ -590,7 +604,7 @@ void TaskMotion::set_point(double x, double y, double z, double roll, double pit
   desired_pose_matrix.fill(0);
   for(int num = 0; num <6 ; num ++)
   {
-    // desired_pose_matrix(num,0) =  current_pose_vector[num];
+    desired_pose_matrix(num,0) =  current_pose_vector[num];
   }
   desired_pose_matrix(0,1) = x;
   desired_pose_matrix(1,1) = y;

@@ -107,6 +107,55 @@ Eigen::Matrix<double, 6, 6> KalmanFilter::get_kalman_gain_k()
   return kalman_gain_k_;
 }
 
+LowPassFilter::LowPassFilter()
+{
+  control_time_ = 0;
+  cutoff_frequency_ = 0;
+  lambda_ = 0;
+  alpha_ = 0;
+  raw_data_ = 0;
+}
+
+LowPassFilter::LowPassFilter(double control_time_init, double cutoff_frequency_init)
+    : control_time_(control_time_init), cutoff_frequency_(cutoff_frequency_init)
+{
+  this->initialize();
+}
+
+LowPassFilter::~LowPassFilter()
+{
+}
+
+void LowPassFilter::initialize()
+{
+  lambda_ = 0;
+  alpha_ = 0;
+  raw_data_ = 0;
+
+  lambda_ = 1 / (2 * M_PI * cutoff_frequency_);
+  alpha_ = control_time_ / (lambda_ + control_time_);
+}
+
+void LowPassFilter::set_parameters(double control_time_init, double cutoff_frequency_init, Eigen::Matrix<double, 6 ,1> data)
+{
+  control_time_ = control_time_init;
+  cutoff_frequency_ = cutoff_frequency_init;
+
+  filtered_data_.resize(data.rows(), data.cols());
+  pre_filtered_data_.setZero(data.rows(), data.cols());
+}
+
+Eigen::Matrix<double, 6 ,1> LowPassFilter::get_lpf_filtered_data(Eigen::Matrix<double, 6 ,1> data)
+{
+  for (int data_num = 0; data_num < data.size(); data_num++)
+  {
+    filtered_data_(data_num, 0) = alpha_ * data(data_num, 0) + ((1 - alpha_) * pre_filtered_data_(data_num, 0));
+    pre_filtered_data_(data_num, 0) = filtered_data_(data_num, 0);
+  }
+  return filtered_data_;
+}
+
+
 ToolEstimation::ToolEstimation()
 {
   initialize();
@@ -118,12 +167,13 @@ void ToolEstimation::initialize()
 {
   control_time_ = 0.002;
   mass_of_tool_ = 1.72;
-  cutoff_frequency_ = 10;
+  cutoff_frequency_ = 3;
 
   r_ = 1000;
   q_ = 0.1;
 
   kf_estimated_force = std::make_shared<KalmanFilter>();
+  lpf_force = std::make_shared<LowPassFilter>();
 
   //filtered_acc_
   gravity_.fill(0);
@@ -146,6 +196,7 @@ void ToolEstimation::initialize()
   f_R_init_ = f_R_init_ * r_;
 
   kf_estimated_force->initialize_system(f_F_init_, f_H_init_, f_Q_init_, f_R_init_, f_B_init_, f_U_init_, f_Z_init_);
+  lpf_force->set_parameters(control_time_, 3, contacted_force_);
   get_sensor_offset_.assign(6,0);
 }
 void ToolEstimation::set_parameters(double control_time_init, double mass_of_tool_init)
@@ -240,8 +291,8 @@ void ToolEstimation::process_estimated_force(std::vector<double> ft_data, std::v
   kf_estimated_force->process_kalman_filtered_data(ft_data_m_);
 
   contacted_force_ = kf_estimated_force->get_estimated_state();
-  contacted_force_ = contacted_force_*0.01 + pre_contacted_force_*0.99;
-  pre_contacted_force_ = contacted_force_;
+
+  contacted_force_ = lpf_force->get_lpf_filtered_data(contacted_force_);
 
   for(unsigned int num = 0 ; num < 6 ; num ++)
   {

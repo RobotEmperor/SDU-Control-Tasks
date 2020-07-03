@@ -72,6 +72,27 @@ class KalmanFilter
   Eigen::Matrix<double, 6 ,1> measurement_output_error_;
 };
 
+class LowPassFilter
+{
+ public:
+  LowPassFilter();
+  LowPassFilter(double control_time_init, double cutoff_frequency_init);
+  ~LowPassFilter();
+  void initialize();
+  void set_parameters(double control_time_init, double cutoff_frequency_init, Eigen::Matrix<double, 6 ,1> data);
+  Eigen::Matrix<double, 6 ,1> get_lpf_filtered_data(Eigen::Matrix<double, 6 ,1> data);  // frq = frequency , ctrl = contro
+
+ private:
+  double control_time_;
+  double cutoff_frequency_;
+  double raw_data_;
+  double lambda_;
+  double alpha_;
+
+  Eigen::Matrix<double, 6 ,1> filtered_data_;
+  Eigen::Matrix<double, 6 ,1> pre_filtered_data_;
+};
+
 class ToolEstimation
 {
 public:
@@ -97,6 +118,7 @@ private:
 
   //filter
   std::shared_ptr<KalmanFilter> kf_estimated_force;
+  std::shared_ptr<LowPassFilter> lpf_force;
 
   //noise variables
   double r_,q_;
