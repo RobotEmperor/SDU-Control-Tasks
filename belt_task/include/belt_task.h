@@ -88,6 +88,10 @@ double f_kp;
 double f_ki;
 double f_kd;
 
+double p_kp;
+double p_ki;
+double p_kd;
+
 bool contact_check;
 
 //solution check
@@ -108,6 +112,10 @@ std::shared_ptr<StatisticsMath> statistics_math;
 std::shared_ptr<PID_function> force_x_compensator;
 std::shared_ptr<PID_function> force_y_compensator;
 std::shared_ptr<PID_function> force_z_compensator;
+
+std::shared_ptr<PID_function> position_x_controller;
+std::shared_ptr<PID_function> position_y_controller;
+std::shared_ptr<PID_function> position_z_controller;
 
 // lpf
 std::shared_ptr<LowPassFilter> lpf_control;

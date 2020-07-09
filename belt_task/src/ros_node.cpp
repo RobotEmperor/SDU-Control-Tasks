@@ -14,6 +14,9 @@ RosNode::RosNode(int argc, char **argv, std::string node_name)
   gain_p_ = 0;
   gain_i_ = 0;
   gain_d_ = 0;
+  force_gain_p_ = 0;
+  force_gain_i_ = 0;
+  force_gain_d_ = 0;
   test_ = false;
 }
 RosNode::~RosNode()
@@ -38,6 +41,7 @@ void RosNode::initialize()
   command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::CommandDataMsgCallBack, this);
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
+  force_pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/force_pid_gain_command", 10, &RosNode::ForcePidGainCommandMsgCallBack, this);
 
   test_sub_ =  nh.subscribe("/sdu/ur10e/test", 10, &RosNode::TestMsgCallBack, this);
 
@@ -64,7 +68,7 @@ void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::Cons
   gain_d_ = msg->data[2];
 
   YAML::Emitter y_out;
-  std::string path_ = "../config/force_pid_gain.yaml";
+  std::string path_ = "../config/pose_pid_gain.yaml";
 
   y_out << YAML::BeginMap;
   y_out << YAML::Key << "p_gain";
@@ -73,6 +77,26 @@ void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::Cons
   y_out << YAML::Value << gain_i_;
   y_out << YAML::Key << "d_gain";
   y_out << YAML::Value << gain_d_;
+  y_out << YAML::EndMap;
+  std::ofstream fout(path_.c_str());
+  fout << y_out.c_str(); // dump it back into the file
+}
+void RosNode::ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
+{
+  force_gain_p_ = msg->data[0];
+  force_gain_i_ = msg->data[1];
+  force_gain_d_ = msg->data[2];
+
+  YAML::Emitter y_out;
+  std::string path_ = "../config/force_pid_gain.yaml";
+
+  y_out << YAML::BeginMap;
+  y_out << YAML::Key << "p_gain";
+  y_out << YAML::Value << force_gain_p_;
+  y_out << YAML::Key << "i_gain";
+  y_out << YAML::Value << force_gain_i_;
+  y_out << YAML::Key << "d_gain";
+  y_out << YAML::Value << force_gain_d_;
   y_out << YAML::EndMap;
   std::ofstream fout(path_.c_str());
   fout << y_out.c_str(); // dump it back into the file
@@ -148,6 +172,7 @@ void RosNode::shout_down_ros()
   command_sub_.shutdown();
   task_command_sub_.shutdown();
   pid_gain_command_sub_.shutdown();
+  force_pid_gain_command_sub_.shutdown();
   test_sub_.shutdown();
   //
 
@@ -176,6 +201,18 @@ double RosNode::get_i_gain()
 double RosNode::get_d_gain()
 {
   return gain_d_;
+}
+double RosNode::get_force_p_gain()
+{
+  return force_gain_p_;
+}
+double RosNode::get_force_i_gain()
+{
+  return force_gain_i_;
+}
+double RosNode::get_force_d_gain()
+{
+  return force_gain_d_;
 }
 bool RosNode::get_test()
 {

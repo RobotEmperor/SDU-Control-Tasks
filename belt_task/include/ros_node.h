@@ -37,6 +37,7 @@ public:
   void CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg);
   void PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
+  void ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void send_gazebo_command (std::vector<double> gazebo_command);
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
@@ -51,6 +52,11 @@ public:
   double get_i_gain();
   double get_d_gain();
 
+  double get_force_p_gain();
+  double get_force_i_gain();
+  double get_force_d_gain();
+
+
   bool get_test();
 
   std::string get_task_command();
@@ -58,6 +64,7 @@ public:
 private:
 
   double gain_p_, gain_i_, gain_d_;
+  double force_gain_p_, force_gain_i_, force_gain_d_;
   std::string task_command_;
 
   std::vector<double> set_point_;
@@ -75,6 +82,7 @@ private:
   ros::Subscriber command_sub_;
   ros::Subscriber task_command_sub_;
   ros::Subscriber pid_gain_command_sub_;
+  ros::Subscriber force_pid_gain_command_sub_;
 
   ros::Subscriber test_sub_;
 

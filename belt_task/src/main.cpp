@@ -46,6 +46,13 @@ void loop_task_proc(void *arg)
   else
   {
     std::cout << COLOR_GREEN_BOLD << "Gazebo robot start " << COLOR_RESET << std::endl;
+    compensated_pose_vector[0] = -0.6649675947900577;
+    compensated_pose_vector[1] = 0.2054059150102794;
+    compensated_pose_vector[2] = 0.25997552421325143;
+
+    compensated_pose_vector[3] = -0.7298511759689527;
+    compensated_pose_vector[4] = -1.7577922996928013;
+    compensated_pose_vector[5] = 1.760382318187891;
   }
 
   static bool pid_on = 0;
@@ -61,7 +68,7 @@ void loop_task_proc(void *arg)
     //check if task command is received or not
     //run motion trajectory task_motion
 
-    //auto_task_motion
+    //auto_task_motion goal
     if(!ros_state->get_task_command().compare("auto"))
     {
       ur10e_task->auto_task_motion(contact_check);
@@ -92,11 +99,27 @@ void loop_task_proc(void *arg)
         ur10e_task->generate_trajectory();
       }
     }
-
-
     //motion reference
     desired_pose_vector = ur10e_task->get_current_pose();
     desired_force_torque_vector = ur10e_task->get_desired_force_torque();
+
+    p_kp = ros_state->get_p_gain();
+    p_ki = ros_state->get_i_gain();
+    p_kd = ros_state->get_d_gain();
+
+    //controller for pose controller
+    position_x_controller->set_pid_gain(p_kp,p_ki,p_kd);
+    position_y_controller->set_pid_gain(p_kp,p_ki,p_kd);
+    position_z_controller->set_pid_gain(p_kp,p_ki,p_kd);
+
+    f_kp = ros_state->get_force_p_gain();
+    f_ki = ros_state->get_force_i_gain();
+    f_kd = ros_state->get_force_d_gain();
+
+    //controller for force compensation
+    force_x_compensator->set_pid_gain(f_kp,f_ki,f_kd);
+    force_y_compensator->set_pid_gain(f_kp,f_ki,f_kd);
+    force_z_compensator->set_pid_gain(f_kp,f_ki,f_kd);
 
     if(!gazebo_check)
     {
@@ -116,15 +139,6 @@ void loop_task_proc(void *arg)
       tool_estimation->process_estimated_force(raw_ft_data, acutal_tcp_acc);
 
       contacted_ft_data = tool_estimation->get_contacted_force();
-
-      f_kp = ros_state->get_p_gain();
-      f_ki = ros_state->get_i_gain();
-      f_kd = ros_state->get_d_gain();
-
-      //controller for force compensation
-      force_x_compensator->set_pid_gain(f_kp,f_ki,f_kd);
-      force_y_compensator->set_pid_gain(f_kp,f_ki,f_kd);
-      force_z_compensator->set_pid_gain(f_kp,f_ki,f_kd);
 
       current_ft = Wrench6D<> (contacted_ft_data[0], contacted_ft_data[1], contacted_ft_data[2], contacted_ft_data[3], contacted_ft_data[4], contacted_ft_data[5]);
 
@@ -176,63 +190,33 @@ void loop_task_proc(void *arg)
         //cout << "desried vector !!!!!!" << desired_pose_vector << endl;
       }
 
+      position_x_controller->PID_calculate(desired_pose_vector[0], actual_tcp_pose[0], 0);
+      position_y_controller->PID_calculate(desired_pose_vector[1], actual_tcp_pose[1], 0);
+      position_z_controller->PID_calculate(desired_pose_vector[2], actual_tcp_pose[2], 0);
 
+      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0.2);
+      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0.2);
+      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0.01);
 
-      if(1)
-      {
-        force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0.2);
-        force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0.2);
-        force_z_compensator->PID_calculate(-3,current_ft.force()[2],0.01);
+      tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
 
-        tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
+      //check limit
+      if(tcp_contact_force_norm_ > 0.03)
+        tcp_contact_force_norm_ = 0.03;
 
-        //check limit
-        if(tcp_contact_force_norm_ > 0.03)
-          tcp_contact_force_norm_ = 0.03;
+      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,-tcp_contact_force_norm_), EAA<>(0,0,0).toRotation3D());
 
-        tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,-tcp_contact_force_norm_), EAA<>(0,0,0).toRotation3D());
+      tf_modified_pose = tf_current * tf_tcp_desired_pose;
 
-        tf_modified_pose = tf_current * tf_tcp_desired_pose;
+      tf_modified_pose.P() = tf_current.P() - tf_modified_pose.P();
 
-        tf_modified_pose.P() = tf_current.P() - tf_modified_pose.P();
+      pid_compensation[0] = position_x_controller->get_final_output()+(tf_modified_pose.P())[0];
+      pid_compensation[1] = position_y_controller->get_final_output()+(tf_modified_pose.P())[1];
+      pid_compensation[2] = position_z_controller->get_final_output()+(tf_modified_pose.P())[2];
+      pid_compensation[3] = 0;
+      pid_compensation[4] = 0;
+      pid_compensation[5] = 0;
 
-        //        static double previous_tf_modified_pose_x_ = 0;
-        //        static double previous_tf_modified_pose_y_ = 0;
-        //        static double previous_tf_modified_pose_z_ = 0;
-
-        //        tf_modified_pose.P()[0] = lpf_control->get_lpf_filtered_data((tf_modified_pose.P())[0]);
-        //        tf_modified_pose.P()[1] = lpf_control->get_lpf_filtered_data((tf_modified_pose.P())[1]);
-        //        tf_modified_pose.P()[2] = lpf_control->get_lpf_filtered_data((tf_modified_pose.P())[2]);
-        //
-        //        cout << tf_modified_pose.P() << endl;
-
-        //        tf_modified_pose.P()[0] = previous_tf_modified_pose_x_*0.9 + tf_modified_pose.P()[0]*0.1;
-        //        tf_modified_pose.P()[1] = previous_tf_modified_pose_y_*0.9 + tf_modified_pose.P()[1]*0.1;
-        //        tf_modified_pose.P()[2] = previous_tf_modified_pose_z_*0.9 + tf_modified_pose.P()[2]*0.1;
-
-
-
-
-        pid_compensation[0] = (tf_modified_pose.P())[0];
-        pid_compensation[1] = (tf_modified_pose.P())[1];
-        pid_compensation[2] = (tf_modified_pose.P())[2];
-        pid_compensation[3] = 0;
-        pid_compensation[4] = 0;
-        pid_compensation[5] = 0;
-
-        //        previous_tf_modified_pose_x_ =  tf_modified_pose.P()[0];
-        //        previous_tf_modified_pose_y_ =  tf_modified_pose.P()[1];
-        //        previous_tf_modified_pose_z_ =  tf_modified_pose.P()[2];
-      }
-      //      else
-      //      {
-      //        pid_compensation[0] = 0;
-      //        pid_compensation[1] = 0;
-      //        pid_compensation[2] = 0;
-      //        pid_compensation[3] = 0;
-      //        pid_compensation[4] = 0;
-      //        pid_compensation[5] = 0;
-      //      }
 
       filtered_tcp_ft_data[0] = current_ft.force()[0];
       filtered_tcp_ft_data[1] = current_ft.force()[1];
@@ -253,19 +237,43 @@ void loop_task_proc(void *arg)
 
 
       //contact_check = statistics_math->calculate_cusum(current_ft.force()[2], 3, 100, -100);
+
+
+      compensated_pose_vector[0] = actual_tcp_pose[0] + pid_compensation[0];
+      compensated_pose_vector[1] = actual_tcp_pose[1] + pid_compensation[1];
+      compensated_pose_vector[2] = actual_tcp_pose[2] + pid_compensation[2];
+
+      compensated_pose_vector[3] = desired_pose_vector[3]; //+ force_x_compensator->get_final_output();
+      compensated_pose_vector[4] = desired_pose_vector[4]; //+ force_x_compensator->get_final_output();
+      compensated_pose_vector[5] = desired_pose_vector[5]; //+ force_x_compensator->get_final_output();
     }
     else
     {
+      position_x_controller->PID_calculate(desired_pose_vector[0], compensated_pose_vector[0], 0);
+      position_y_controller->PID_calculate(desired_pose_vector[1], compensated_pose_vector[1], 0);
+      position_z_controller->PID_calculate(desired_pose_vector[2], compensated_pose_vector[2], 0);
+
       contact_check = ros_state->get_test();
       ur10e_task->set_current_pose_eaa(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2],compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]);
-    }
-    compensated_pose_vector[0] = desired_pose_vector[0] - pid_compensation[0];
-    compensated_pose_vector[1] = desired_pose_vector[1] - pid_compensation[1];
-    compensated_pose_vector[2] = desired_pose_vector[2] - pid_compensation[2];
 
-    compensated_pose_vector[3] = desired_pose_vector[3]; //+ force_x_compensator->get_final_output();
-    compensated_pose_vector[4] = desired_pose_vector[4]; //+ force_x_compensator->get_final_output();
-    compensated_pose_vector[5] = desired_pose_vector[5]; //+ force_x_compensator->get_final_output();
+      pid_compensation[0] = position_x_controller->get_final_output();
+      pid_compensation[1] = position_y_controller->get_final_output();
+      pid_compensation[2] = position_z_controller->get_final_output();
+      pid_compensation[3] = 0;
+      pid_compensation[4] = 0;
+      pid_compensation[5] = 0;
+
+      //cout << pid_compensation << endl;
+
+      compensated_pose_vector[0] = compensated_pose_vector[0] + pid_compensation[0];
+      compensated_pose_vector[1] = compensated_pose_vector[1] + pid_compensation[1];
+      compensated_pose_vector[2] = compensated_pose_vector[2] + pid_compensation[2];
+
+      compensated_pose_vector[3] = desired_pose_vector[3]; //+ force_x_compensator->get_final_output();
+      compensated_pose_vector[4] = desired_pose_vector[4]; //+ force_x_compensator->get_final_output();
+      compensated_pose_vector[5] = desired_pose_vector[5]; //+ force_x_compensator->get_final_output();
+    }
+
 
     tf_desired = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]),
         EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
@@ -336,6 +344,10 @@ void loop_task_proc(void *arg)
     ros_state->send_filtered_ft_data(contacted_ft_data);
     ros_state->send_pid_compensation_data(pid_compensation);
 
+    //    ros_state->send_raw_ft_data(desired_pose_vector);
+    //    ros_state->send_filtered_ft_data(compensated_pose_vector);
+    //    ros_state->send_pid_compensation_data(compensated_pose_vector);
+
     //data log save
     data_log->set_time_count(time_count);
     data_log->set_data_getActualQ(joint_positions);
@@ -352,8 +364,8 @@ void loop_task_proc(void *arg)
     previous_task_command = ros_state->get_task_command();
 
     //    previous_t = (rt_timer_read() - tstart)/1000000.0;
-    //    if(previous_t > 2)
-    //      cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //
+    //    cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
 
     rt_task_wait_period(NULL);
   }
@@ -392,6 +404,10 @@ void initialize()
   force_x_compensator = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
   force_y_compensator = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
   force_z_compensator = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
+
+  position_x_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
+  position_y_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
+  position_z_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
 
   //lpf
   //lpf_control = std::make_shared<LowPassFilter>(control_time,3);
@@ -503,7 +519,7 @@ int main (int argc, char **argv)
 
   printf("Starting cyclic task...\n");
   sprintf(str, "Belt Task Start");
-  rt_task_create(&loop_task, str, 0, 50, 0);//Create the real time task
+  rt_task_create(&loop_task, str, 0, 80, 0);//Create the real time task
   rt_task_start(&loop_task, &loop_task_proc, 0);//Since task starts in suspended mode, start task
 
   std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;
