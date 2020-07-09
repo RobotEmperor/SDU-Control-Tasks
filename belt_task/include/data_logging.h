@@ -36,6 +36,7 @@ public:
   void set_data_getFilteredTCPForceTorque(std::vector<double> filtered_tcp_ft);
   void set_data_getContactedForceTorque(std::vector<double> contacted_ft);
   void set_data_getPidCompensation(std::vector<double> pid_compensation);
+  void set_data_getDesiredTCPPose(std::vector<double> desired_pose);
   void set_data_new_line();
   std::string data_change_to_string(std::vector<double> data);
 
@@ -51,6 +52,7 @@ private:
   std::string getFilteredTCPForceTorque_;
   std::string getContactedForceTorque_;
   std::string getPidCompensation_;
+  std::string getDesiredTCPPose_;
 
 
 };

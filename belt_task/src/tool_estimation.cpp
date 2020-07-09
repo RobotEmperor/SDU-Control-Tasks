@@ -154,6 +154,16 @@ Eigen::Matrix<double, 6 ,1> LowPassFilter::get_lpf_filtered_data(Eigen::Matrix<d
   }
   return filtered_data_;
 }
+double LowPassFilter::get_lpf_filtered_data(double data)
+{
+  static double filtered_data_d_;
+  static double pre_filtered_data_d_;
+
+    filtered_data_d_= alpha_ * data + ((1 - alpha_) * pre_filtered_data_d_);
+    pre_filtered_data_d_= filtered_data_d_;
+
+  return filtered_data_d_;
+}
 
 
 ToolEstimation::ToolEstimation()
@@ -169,7 +179,7 @@ void ToolEstimation::initialize()
   mass_of_tool_ = 1.72;
   cutoff_frequency_ = 3;
 
-  r_ = 1000;
+  r_ = 100;
   q_ = 0.1;
 
   kf_estimated_force = std::make_shared<KalmanFilter>();
@@ -197,6 +207,7 @@ void ToolEstimation::initialize()
 
   kf_estimated_force->initialize_system(f_F_init_, f_H_init_, f_Q_init_, f_R_init_, f_B_init_, f_U_init_, f_Z_init_);
   lpf_force->set_parameters(control_time_, 3, contacted_force_);
+  lpf_force->initialize();
   get_sensor_offset_.assign(6,0);
 }
 void ToolEstimation::set_parameters(double control_time_init, double mass_of_tool_init)

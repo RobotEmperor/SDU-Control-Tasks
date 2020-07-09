@@ -81,6 +81,7 @@ class LowPassFilter
   void initialize();
   void set_parameters(double control_time_init, double cutoff_frequency_init, Eigen::Matrix<double, 6 ,1> data);
   Eigen::Matrix<double, 6 ,1> get_lpf_filtered_data(Eigen::Matrix<double, 6 ,1> data);  // frq = frequency , ctrl = contro
+  double get_lpf_filtered_data(double data);
 
  private:
   double control_time_;

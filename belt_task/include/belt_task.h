@@ -109,6 +109,9 @@ std::shared_ptr<PID_function> force_x_compensator;
 std::shared_ptr<PID_function> force_y_compensator;
 std::shared_ptr<PID_function> force_z_compensator;
 
+// lpf
+std::shared_ptr<LowPassFilter> lpf_control;
+
 //robot interface
 std::shared_ptr<RTDEReceiveInterface> rtde_receive_a;
 std::shared_ptr<RTDEControlInterface> rtde_control_a;

@@ -3,4 +3,4 @@ initial_robot_ee_position: [-0.6649675947900577, 0.2054059150102794, 0.259975524
 
 bigger_pulley_bearing_position: [-0.739757210413974, 0.07993900394775277, 0.2449995438351456, -0.7217029684216122, -1.7591780460014375, 1.7685571865188172]
 
-task_initial_position: [-0.142, 0, -0.025, 0,0,0] # in relative to bigger pulley bearing's frame.
+task_initial_position: [-0.13, 0, -0.025, 0,0,0] # in relative to bigger pulley bearing's frame.

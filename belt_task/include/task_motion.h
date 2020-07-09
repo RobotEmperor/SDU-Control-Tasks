@@ -52,6 +52,7 @@ public:
   void calculate_init_final_velocity(int point_number);
 
   void clear_task_motion();
+  void clear_phase();
 
   void set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z, double time);
   void set_initial_pose(double x, double y, double z, double axis_x, double axis_y, double axis_z);

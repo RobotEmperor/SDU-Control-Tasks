@@ -80,6 +80,9 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   //  std::cout << bigger_pulley_bearing_position << std::endl;
   //  std::cout << task_initial_position << std::endl;
 
+ // Transform3D<> tf_base_to_bearing2_plain;
+ // tf_base_to_bearing2_plain = Transform3D<> (Vector3D<> (-0.640481, -0.0055886, 0.245102), EAA<>(initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]).toRotation3D());
+
   set_initial_pose(initial_robot_ee_position[0], initial_robot_ee_position[1], initial_robot_ee_position[2], initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]); // set to be robot initial values
 
   tf_base_to_bearing = Transform3D<> (Vector3D<>(bigger_pulley_bearing_position[0], bigger_pulley_bearing_position[1], bigger_pulley_bearing_position[2]), EAA<>(bigger_pulley_bearing_position[3], bigger_pulley_bearing_position[4], bigger_pulley_bearing_position[5]).toRotation3D());
@@ -89,16 +92,19 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   tf_base_to_init_task = tf_base_to_bearing*tf_bearing_to_init;
   tf_base_to_bearing2 = tf_base_to_bearing*tf_bearing_to_bearing2;
 
+//  tf_base_to_init_task.invMult(tf_base_to_init_task, tf_base_to_bearing2_plain);
+
+
   std::cout << tf_base_to_init_task << std::endl;
   std::cout << tf_base_to_bearing2 << std::endl;
 
-  //  smaller_pulley_bearing_position[0] = Vector3D<> (tf_base_to_bearing2.P())[0];;
-  //  smaller_pulley_bearing_position[1] = Vector3D<> (tf_base_to_bearing2.P())[1];;
-  //  smaller_pulley_bearing_position[2] = Vector3D<> (tf_base_to_bearing2.P())[2];;
+  //smaller_pulley_bearing_position[0] = Vector3D<> (tf_base_to_bearing2.P())[0];;
+  //smaller_pulley_bearing_position[1] = Vector3D<> (tf_base_to_bearing2.P())[1];;
+  //smaller_pulley_bearing_position[2] = Vector3D<> (tf_base_to_bearing2.P())[2];;
   //
-  //  smaller_pulley_bearing_position[3] = EAA<> (tf_base_to_bearing2.R())[0];
-  //  smaller_pulley_bearing_position[4] = EAA<> (tf_base_to_bearing2.R())[1];
-  //  smaller_pulley_bearing_position[5] = EAA<> (tf_base_to_bearing2.R())[2];
+  //smaller_pulley_bearing_position[3] = EAA<> (tf_base_to_bearing2.R())[0];
+  //smaller_pulley_bearing_position[4] = EAA<> (tf_base_to_bearing2.R())[1];
+  //smaller_pulley_bearing_position[5] = EAA<> (tf_base_to_bearing2.R())[2];
 }
 void TaskMotion::robot_initialize() // joint space
 {
@@ -341,37 +347,39 @@ void TaskMotion::auto_task_motion(bool contact_)
   //phase 0 move to pulley as closely as possible  / global
   if(phases_ == 0)
   {
-    tcp_rpy_ = RPY<>(0,0,0);
-
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, 0.02), tcp_rpy_.toRotation3D());
-
-    tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
-
-    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
-    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
-    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
-
-    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
-    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
-    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
-
-    for(int num = 0; num <6; num ++)
-    {
-      desired_pose_matrix(num,7) = 15;
-    }
-    //generate_trajectory();
-
     if(contact_)
     {
       tf_base_to_contact_point_ = tf_current_pose_;
       std::cout << "Contacted!" << std::endl;
       stop_motion();
+      //return;
       phases_ ++;
+    }
+    else
+    {
+      tcp_rpy_ = RPY<>(0,0,0);
+
+      tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, 0.018), tcp_rpy_.toRotation3D());
+
+      tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
+
+      desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+      desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+      desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+      desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+      desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+      desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+      for(int num = 0; num <6; num ++)
+      {
+        desired_pose_matrix(num,7) = 15;
+      }
     }
   }
   if(phases_ == 1)
   {
-    path_y_ -= (0.002*0.03)/10.0;
+    path_y_ -= (0.002*0.03)/30.0;
     tcp_rpy_ = RPY<>(0,0,0);
 
     tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, -0.03, 0), tcp_rpy_.toRotation3D());
@@ -388,10 +396,8 @@ void TaskMotion::auto_task_motion(bool contact_)
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 10;
+      desired_pose_matrix(num,7) = 15;
     }
-
-    //generate_trajectory();
 
     if (!contact_ || path_y_ < -0.03)
     {
@@ -404,9 +410,32 @@ void TaskMotion::auto_task_motion(bool contact_)
       std::cout << "Released!" << std::endl;
       stop_motion();
       phases_ ++;
+      path_y_ = 0;
     }
   }
   if(phases_ == 2)
+  {
+    tcp_rpy_ = RPY<>(0,0,0);
+
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, 0.005), tcp_rpy_.toRotation3D());
+
+    tf_desired_pose_ = tf_base_to_contact_point_*tf_tcp_desired_pose_;
+
+    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+    for(int num = 0; num <6 ; num ++)
+    {
+      desired_pose_matrix(num,7) = 15;
+    }
+
+  }
+  if(phases_ == 3)
   {
     //phase 1 getting global points from pulley frame
     //->calculate desired paths global
@@ -439,12 +468,13 @@ void TaskMotion::auto_task_motion(bool contact_)
       std::cout << "End!" << std::endl;
       stop_motion();
       phases_ ++;
+      path_angle_ = 0;
     }
 
     set_initial_pose(current_pose_vector[0], current_pose_vector[1], current_pose_vector[2], current_pose_vector[3], current_pose_vector[4], current_pose_vector[5]);
     //robot_traj->cal_end_point_to_rad(desired_pose_matrix);
   }
-  if(phases_ == 3)
+  if(phases_ == 4)
   {
     //generate_trajectory();
     //    desired_pose_matrix(0,1) = init_belt_motion_task_pose_vector[0][0];
@@ -477,6 +507,8 @@ void TaskMotion::auto_task_motion(bool contact_)
       current_pose_vector[num] = robot_traj->get_traj_results()(num,0);
     }
   }
+  if(phases_ == 2 && robot_traj->is_moving_check == false)
+    phases_ ++;
 }
 void TaskMotion::run_task_motion()
 {
@@ -633,6 +665,11 @@ void TaskMotion::clear_task_motion()
   motion_start_time_vector.clear();
   motion_task_pose_vector.clear();
 }
+void TaskMotion::clear_phase()
+{
+  phases_ = 0;
+}
+
 double TaskMotion::calculate_velocity(double first_point,double second_point, double interval_time)
 {
   return (second_point - first_point)/interval_time;
