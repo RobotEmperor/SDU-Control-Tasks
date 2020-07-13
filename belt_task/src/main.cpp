@@ -17,15 +17,17 @@ void loop_task_proc(void *arg)
   ClosedFormIKSolverUR solver(device, state);
   solver.setCheckJointLimits(true);
 
-  RT_TASK *curtask;
-  RT_TASK_INFO curtaskinfo;
-  RTIME tstart;
+  //  RT_TASK *curtask;
+  //  RT_TASK_INFO curtaskinfo;
 
-  curtask = rt_task_self();
-  rt_task_inquire(curtask, &curtaskinfo);
-
-  printf("Starting task %s with period of %f ms ....\n", curtaskinfo.name, control_time*1000);
+  //
+  //  curtask = rt_task_self();
+  //  rt_task_inquire(curtask, &curtaskinfo);
+  //
+  //  printf("Starting task %s with period of %f ms ....\n", curtaskinfo.name, control_time*1000);
   //Make the task periodic with a specified loop period
+
+  RTIME tstart;
   rt_task_set_periodic(NULL, TM_NOW, LOOP_PERIOD);
   tstart = rt_timer_read();
 
@@ -153,7 +155,7 @@ void loop_task_proc(void *arg)
       // tcp frame
       static int temp = 0;
 
-      if(current_ft.force()[2] < -3 && !contact_check && temp == 0)
+      if(current_ft.force()[2] < -2 && !contact_check && temp == 0)
       {
         contact_check = 1;
         temp ++;
@@ -183,7 +185,7 @@ void loop_task_proc(void *arg)
       //        }
       //      }
 
-      if(current_ft.force()[2] > 0 && contact_check)
+      if(current_ft.force()[2] > 0  && contact_check)
       {
         contact_check = 0;
         cout << "released !!!!!!" << endl;
@@ -196,7 +198,7 @@ void loop_task_proc(void *arg)
 
       force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0.2);
       force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0.2);
-      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0.01);
+      force_z_compensator->PID_calculate(-3,current_ft.force()[2],0.2);
 
       tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
 
@@ -204,7 +206,7 @@ void loop_task_proc(void *arg)
       if(tcp_contact_force_norm_ > 0.03)
         tcp_contact_force_norm_ = 0.03;
 
-      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,-tcp_contact_force_norm_), EAA<>(0,0,0).toRotation3D());
+      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
 
       tf_modified_pose = tf_current * tf_tcp_desired_pose;
 
@@ -363,9 +365,9 @@ void loop_task_proc(void *arg)
 
     previous_task_command = ros_state->get_task_command();
 
-    //    previous_t = (rt_timer_read() - tstart)/1000000.0;
-    //
-    //    cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+//    previous_t = (rt_timer_read() - tstart)/1000000.0;
+//
+//    cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
 
     rt_task_wait_period(NULL);
   }
@@ -519,7 +521,7 @@ int main (int argc, char **argv)
 
   printf("Starting cyclic task...\n");
   sprintf(str, "Belt Task Start");
-  rt_task_create(&loop_task, str, 0, 80, 0);//Create the real time task
+  rt_task_create(&loop_task, str, 0, 99, 0);//Create the real time task
   rt_task_start(&loop_task, &loop_task_proc, 0);//Since task starts in suspended mode, start task
 
   std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;
@@ -529,6 +531,8 @@ int main (int argc, char **argv)
   {
   }
   rt_task_delete(&loop_task);
+
+  usleep(3000000);
 
   ros_state->shout_down_ros();
   data_log->save_file();

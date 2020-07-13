@@ -359,7 +359,7 @@ void TaskMotion::auto_task_motion(bool contact_)
     {
       tcp_rpy_ = RPY<>(0,0,0);
 
-      tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, 0.018), tcp_rpy_.toRotation3D());
+      tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, 0.019), tcp_rpy_.toRotation3D());
 
       tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
 
