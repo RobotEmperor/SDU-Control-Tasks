@@ -57,13 +57,12 @@ void loop_task_proc(void *arg)
     compensated_pose_vector[5] = 1.760382318187891;
   }
 
-  static bool pid_on = 0;
-
   while(1)
   {
     static double previous_t = 0.0;
     tstart = rt_timer_read();
     time_count += control_time;
+
     ros_state->update_ros_data();
 
     //do something
@@ -73,7 +72,15 @@ void loop_task_proc(void *arg)
     //auto_task_motion goal
     if(!ros_state->get_task_command().compare("auto"))
     {
+      static int previous_phases_ = 0;
       ur10e_task->auto_task_motion(contact_check);
+
+      if(ur10e_task->get_phases_() == 1 && previous_phases_ == 2)
+      {
+        cout << "Zero ft sensor" << endl;
+        tool_estimation->set_sensor_offset_value(raw_ft_data);
+      }
+      previous_phases_ = ur10e_task->get_phases_();
     }
     else
     {
@@ -94,7 +101,6 @@ void loop_task_proc(void *arg)
           ur10e_task->clear_phase();
           ur10e_task->clear_task_motion();
           ur10e_task->change_motion(ros_state->get_task_command());
-          pid_on = false;
           contact_check = false;
         }
         ur10e_task->run_task_motion();
@@ -125,7 +131,6 @@ void loop_task_proc(void *arg)
 
     if(!gazebo_check)
     {
-      double tcp_contact_force_norm_ = 0;
       //getting sensor values sensor filter
       raw_ft_data     = rtde_receive_a->getActualTCPForce();
       acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
@@ -144,80 +149,94 @@ void loop_task_proc(void *arg)
 
       current_ft = Wrench6D<> (contacted_ft_data[0], contacted_ft_data[1], contacted_ft_data[2], contacted_ft_data[3], contacted_ft_data[4], contacted_ft_data[5]);
 
+      //contacted_ft_no_offset_data = tool_estimation->get_no_offset_contacted_force();
+
+      //current_ft_no_offset = Wrench6D<> (contacted_ft_no_offset_data[0], contacted_ft_no_offset_data[1], contacted_ft_no_offset_data[2], contacted_ft_no_offset_data[3], contacted_ft_no_offset_data[4], contacted_ft_no_offset_data[5]);
+
       current_ft = (tf_current.R()).inverse()*current_ft;
+      //current_ft_no_offset = (tf_current.R()).inverse()*current_ft_no_offset;
 
       tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
 
-      static rw::math::Transform3D<> tf_contacted;
-      static rw::math::Transform3D<> tf_contacted_inv;
-      static rw::math::Transform3D<> tf_detected;
-      static rw::math::Transform3D<> tf_error;
-      // tcp frame
-      static int temp = 0;
+      //      static rw::math::Transform3D<> tf_contacted;
+      //      static rw::math::Transform3D<> tf_contacted_inv;
+      //      static rw::math::Transform3D<> tf_detected;
+      //      static rw::math::Transform3D<> tf_error;
 
-      if(current_ft.force()[2] < -2 && !contact_check && temp == 0)
-      {
-        contact_check = 1;
-        temp ++;
-        tf_contacted = tf_current;
-        cout << "contacted !!!!!!" << tf_contacted.P() << endl;
-        //cout << "desried vector !!!!!!" << desired_pose_vector << endl;
-      }
+      //      if(current_ft.force()[2] < -3 && !contact_check && temp == 0)
+      //      {
+      //        contact_check = 1;
+      //        temp ++;
+      //        tf_contacted = tf_current;
+      //        cout << "contacted !!!!!!" << tf_contacted.P() << endl;
+      //        //cout << "desried vector !!!!!!" << desired_pose_vector << endl;
+      //      }
 
       //tf_contacted_inv = tf_contacted;
 
-      //      if(contact_check)
-      //      {
-      //        //tf_error.P() = tf_contacted.P() - tf_current.P(); // base frame
+      //if(contact_check)
+      //{
+      //  //tf_error.P() = tf_contacted.P() - tf_current.P(); // base frame
       //
-      //        tf_contacted_inv.invMult(tf_contacted_inv, tf_current);
+      //  tf_contacted_inv.invMult(tf_contacted_inv, tf_current);
       //
-      //        //tf_contacted_inv.invMult(tf_contacted_inv, tf_error);
-      //        //tcp frame
-      //        tf_detected = tf_contacted_inv;
+      //  //tf_contacted_inv.invMult(tf_contacted_inv, tf_error);
+      //  //tcp frame
+      //  tf_detected = tf_contacted_inv;
       //
-      //        //cout << "tf_detected.P() :: "  << tf_detected.P() << endl;
+      //  //cout << "tf_detected.P() :: "  << tf_detected.P() << endl;
       //
-      //        if(tf_detected.P()[2] > 0.002)
-      //        {
-      //          contact_check = 0;
-      //          cout << "released !!!!!!"  << tf_detected.P()[2] << endl;
-      //        }
-      //      }
+      //  if(tf_detected.P()[2] > 0.002)
+      //  {
+      //    contact_check = 0;
+      //    cout << "released !!!!!!"  << tf_detected.P()[2] << endl;
+      //  }
+      //}
 
-      if(current_ft.force()[2] > 0  && contact_check)
+      if(current_ft.force()[1] > 5  && !contact_check)
       {
-        contact_check = 0;
-        cout << "released !!!!!!" << endl;
-        //cout << "desried vector !!!!!!" << desired_pose_vector << endl;
+        contact_check = 1;
+        cout << "A rubber belt was inserted in a pulley" << endl;
       }
 
       position_x_controller->PID_calculate(desired_pose_vector[0], actual_tcp_pose[0], 0);
       position_y_controller->PID_calculate(desired_pose_vector[1], actual_tcp_pose[1], 0);
       position_z_controller->PID_calculate(desired_pose_vector[2], actual_tcp_pose[2], 0);
 
-      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0.2);
-      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0.2);
-      force_z_compensator->PID_calculate(-3,current_ft.force()[2],0.2);
+      //      if(ur10e_task->get_phases_() == 0 || ur10e_task->get_phases_() == 2)
+      //      {
+      //        force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
+      //        force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0);
+      //        force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0);
+      //
+      //        tf_tcp_desired_pose = Transform3D<> (Vector3D<>(force_x_compensator->get_final_output(),force_y_compensator->get_final_output(),force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
+      //      }
+      //
+      //      if(ur10e_task->get_phases_() == 1)
+      //      {
+      //        force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
+      //        force_y_compensator->PID_calculate(-10,current_ft.force()[1],0);
+      //        force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0);
+      //
+      //        tf_tcp_desired_pose = Transform3D<> (Vector3D<>(force_x_compensator->get_final_output(),force_y_compensator->get_final_output(),force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
+      //      }
 
-      tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
+      force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
+      force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0);
+      force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0);
 
-      //check limit
-      if(tcp_contact_force_norm_ > 0.03)
-        tcp_contact_force_norm_ = 0.03;
-
-      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(0,0,force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
+      tf_tcp_desired_pose = Transform3D<> (Vector3D<>(force_x_compensator->get_final_output(),force_y_compensator->get_final_output(),force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
 
       tf_modified_pose = tf_current * tf_tcp_desired_pose;
 
       tf_modified_pose.P() = tf_current.P() - tf_modified_pose.P();
 
-      pid_compensation[0] = position_x_controller->get_final_output()+(tf_modified_pose.P())[0];
-      pid_compensation[1] = position_y_controller->get_final_output()+(tf_modified_pose.P())[1];
-      pid_compensation[2] = position_z_controller->get_final_output()+(tf_modified_pose.P())[2];
-      pid_compensation[3] = 0;
-      pid_compensation[4] = 0;
-      pid_compensation[5] = 0;
+      pid_compensation[0] = position_x_controller->get_final_output();
+      pid_compensation[1] = position_y_controller->get_final_output();
+      pid_compensation[2] = position_z_controller->get_final_output();
+      pid_compensation[3] = (tf_modified_pose.P())[0];
+      pid_compensation[4] = (tf_modified_pose.P())[1];
+      pid_compensation[5] = (tf_modified_pose.P())[2];
 
 
       filtered_tcp_ft_data[0] = current_ft.force()[0];
@@ -227,23 +246,9 @@ void loop_task_proc(void *arg)
       filtered_tcp_ft_data[4] = current_ft.torque()[1];
       filtered_tcp_ft_data[5] = current_ft.torque()[2];
 
-      //tcp_contact_force_norm_ = sqrt(pow(force_x_compensator->get_final_output(),2)+pow(force_y_compensator->get_final_output(),2)+pow(force_z_compensator->get_final_output(),2));
-
-      //check limit
-      //if(tcp_contact_force_norm_ > 0.01)
-      //  tcp_contact_force_norm_ = 0.01;
-
-      //cout << tcp_contact_force_norm_ << endl;
-
-      //contact_check = ros_state->get_test();
-
-
-      //contact_check = statistics_math->calculate_cusum(current_ft.force()[2], 3, 100, -100);
-
-
-      compensated_pose_vector[0] = actual_tcp_pose[0] + pid_compensation[0];
-      compensated_pose_vector[1] = actual_tcp_pose[1] + pid_compensation[1];
-      compensated_pose_vector[2] = actual_tcp_pose[2] + pid_compensation[2];
+      compensated_pose_vector[0] = actual_tcp_pose[0] + position_x_controller->get_final_output()+(tf_modified_pose.P())[0];
+      compensated_pose_vector[1] = actual_tcp_pose[1] + position_y_controller->get_final_output()+(tf_modified_pose.P())[1];
+      compensated_pose_vector[2] = actual_tcp_pose[2] + position_z_controller->get_final_output()+(tf_modified_pose.P())[2];
 
       compensated_pose_vector[3] = desired_pose_vector[3]; //+ force_x_compensator->get_final_output();
       compensated_pose_vector[4] = desired_pose_vector[4]; //+ force_x_compensator->get_final_output();
@@ -310,7 +315,7 @@ void loop_task_proc(void *arg)
     //check velocity
     for(int num = 0; num <6 ; num ++)
     {
-      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 65*DEGREE2RADIAN)
+      if(fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) > 270*DEGREE2RADIAN)
       {
         cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
         std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
@@ -323,7 +328,7 @@ void loop_task_proc(void *arg)
     {
       if(!gazebo_check)
       {
-        rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,0.002,0.04,2000);
+        rtde_control_a->servoJ(solutions[1].toStdVector(),0,0,control_time,0.04,2000);
 
         //for test
         //ros_state->send_gazebo_command(solutions[1].toStdVector());
@@ -344,7 +349,7 @@ void loop_task_proc(void *arg)
 
     ros_state->send_raw_ft_data(raw_ft_data);
     ros_state->send_filtered_ft_data(contacted_ft_data);
-    ros_state->send_pid_compensation_data(pid_compensation);
+    //    ros_state->send_pid_compensation_data(pid_compensation);
 
     //    ros_state->send_raw_ft_data(desired_pose_vector);
     //    ros_state->send_filtered_ft_data(compensated_pose_vector);
@@ -364,10 +369,8 @@ void loop_task_proc(void *arg)
     data_log->set_data_new_line();
 
     previous_task_command = ros_state->get_task_command();
-
-//    previous_t = (rt_timer_read() - tstart)/1000000.0;
-//
-//    cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //previous_t = (rt_timer_read() - tstart)/1000000.0;
+    // cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
 
     rt_task_wait_period(NULL);
   }

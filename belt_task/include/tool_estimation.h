@@ -105,11 +105,12 @@ public:
   void set_noise_cov_parameters(double q_noise, double r_noise);
   void set_orientation_data(Transform3D<>  tf_base_to_tool);
   void set_gravity_input_data(std::vector<double> gravity_input);
-  void set_sensor_offset_value(std::vector<double> raw_sensor_value, int num_sample_);
+  void set_sensor_offset_value(std::vector<double> raw_sensor_value);
 
   void process_estimated_force(std::vector<double> ft_data, std::vector<double> linear_acc_data);
 
   std::vector<double> get_contacted_force();
+  std::vector<double> get_no_offset_contacted_force();
   std::vector<double> get_sensor_offset_value();
 
 private:
@@ -140,6 +141,7 @@ private:
   Eigen::Matrix<double, 6 ,1> contacted_force_;
   Eigen::Matrix<double, 6 ,1> pre_contacted_force_;
 
+  std::vector<double> get_no_offset_contacted_force_;
   std::vector<double> get_contacted_force_;
   std::vector<double> get_sensor_offset_;
 };

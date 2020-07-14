@@ -117,7 +117,7 @@ LowPassFilter::LowPassFilter()
 }
 
 LowPassFilter::LowPassFilter(double control_time_init, double cutoff_frequency_init)
-    : control_time_(control_time_init), cutoff_frequency_(cutoff_frequency_init)
+: control_time_(control_time_init), cutoff_frequency_(cutoff_frequency_init)
 {
   this->initialize();
 }
@@ -159,8 +159,8 @@ double LowPassFilter::get_lpf_filtered_data(double data)
   static double filtered_data_d_;
   static double pre_filtered_data_d_;
 
-    filtered_data_d_= alpha_ * data + ((1 - alpha_) * pre_filtered_data_d_);
-    pre_filtered_data_d_= filtered_data_d_;
+  filtered_data_d_= alpha_ * data + ((1 - alpha_) * pre_filtered_data_d_);
+  pre_filtered_data_d_= filtered_data_d_;
 
   return filtered_data_d_;
 }
@@ -179,7 +179,7 @@ void ToolEstimation::initialize()
   mass_of_tool_ = 1.72;
   cutoff_frequency_ = 3;
 
-  r_ = 100;
+  r_ = 20;
   q_ = 0.1;
 
   kf_estimated_force = std::make_shared<KalmanFilter>();
@@ -244,29 +244,11 @@ void ToolEstimation::set_gravity_input_data(std::vector<double> gravity_input)
 
   gravity_ = orientation_base_to_tool_*gravity_input_m_;
 }
-void ToolEstimation::set_sensor_offset_value(std::vector<double> raw_sensor_value, int num_sample_)
+void ToolEstimation::set_sensor_offset_value(std::vector<double> raw_sensor_value)
 {
-  static int current_sample_ = 0;
-  if(current_sample_ == 0)
+  for(unsigned int num = 0 ; num < raw_sensor_value.size() ; num ++)
   {
-    get_sensor_offset_.assign(raw_sensor_value.size(), 0);
-  }
-
-  if(current_sample_ < num_sample_ - 1)
-  {
-    for(unsigned int num = 0 ; num < raw_sensor_value.size() ; num ++)
-    {
-      get_sensor_offset_[num] += raw_sensor_value[num];
-    }
-    current_sample_ ++;
-  }
-  else
-  {
-    for(unsigned int num = 0 ; num < raw_sensor_value.size() ; num ++)
-    {
-      get_sensor_offset_[num] = get_sensor_offset_[num]/(current_sample_ + 1);
-    }
-    current_sample_ = 0;
+    get_sensor_offset_[num] = raw_sensor_value[num];
   }
 }
 void ToolEstimation::process_estimated_force(std::vector<double> ft_data, std::vector<double> linear_acc_data)  // input entire force torque
@@ -292,22 +274,27 @@ void ToolEstimation::process_estimated_force(std::vector<double> ft_data, std::v
 
   compensated_acc_ = orientation_base_to_tool_ * compensated_acc_;
 
-  ft_data_m_(0,0) =  ft_data_m_(0,0) + (mass_of_tool_*compensated_acc_)(0,0) - get_sensor_offset_[0];
-  ft_data_m_(1,0) =  ft_data_m_(1,0) + (mass_of_tool_*compensated_acc_)(1,0) - get_sensor_offset_[1];
-  ft_data_m_(2,0) =  ft_data_m_(2,0) + (mass_of_tool_*compensated_acc_)(2,0) - get_sensor_offset_[2];
-  ft_data_m_(3,0) =  ft_data_m_(3,0) - get_sensor_offset_[3];
-  ft_data_m_(4,0) =  ft_data_m_(4,0) - get_sensor_offset_[4];
-  ft_data_m_(5,0) =  ft_data_m_(5,0) - get_sensor_offset_[5];
+  ft_data_m_(0,0) =  ft_data_m_(0,0) + (mass_of_tool_*compensated_acc_)(0,0);
+  ft_data_m_(1,0) =  ft_data_m_(1,0) + (mass_of_tool_*compensated_acc_)(1,0);
+  ft_data_m_(2,0) =  ft_data_m_(2,0) + (mass_of_tool_*compensated_acc_)(2,0);
+  ft_data_m_(3,0) =  ft_data_m_(3,0);
+  ft_data_m_(4,0) =  ft_data_m_(4,0);
+  ft_data_m_(5,0) =  ft_data_m_(5,0);
 
   kf_estimated_force->process_kalman_filtered_data(ft_data_m_);
 
   contacted_force_ = kf_estimated_force->get_estimated_state();
 
-  contacted_force_ = lpf_force->get_lpf_filtered_data(contacted_force_);
+  //contacted_force_ = lpf_force->get_lpf_filtered_data(contacted_force_);
 
   for(unsigned int num = 0 ; num < 6 ; num ++)
   {
-    get_contacted_force_.push_back(contacted_force_(num,0));
+    get_contacted_force_.push_back(contacted_force_(num,0) - get_sensor_offset_[num]);
+  }
+
+  for(unsigned int num = 0 ; num < 6 ; num ++)
+  {
+    get_no_offset_contacted_force_.push_back(contacted_force_(num,0));
   }
 }
 std::vector<double> ToolEstimation::get_contacted_force()
@@ -317,6 +304,10 @@ std::vector<double> ToolEstimation::get_contacted_force()
 std::vector<double> ToolEstimation::get_sensor_offset_value()
 {
   return get_sensor_offset_;
+}
+std::vector<double> ToolEstimation::get_no_offset_contacted_force()
+{
+  return get_no_offset_contacted_force_;
 }
 
 

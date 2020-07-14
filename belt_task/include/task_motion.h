@@ -71,6 +71,7 @@ public:
   std::vector<double> get_set_point_base();
   std::vector<double> get_current_pose();
   std::vector<double> get_desired_force_torque();
+  unsigned int get_phases_();
 
 private:
   int number_of_point;
@@ -87,6 +88,9 @@ private:
 
   double path_angle_;
   double path_y_;
+  double change_path_x_;
+  double change_path_y_;
+  double change_path_z_;
   unsigned int phases_;
   double radious_;
 

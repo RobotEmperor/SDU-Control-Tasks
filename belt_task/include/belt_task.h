@@ -6,6 +6,8 @@
  */
 #ifndef SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
 #define SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
+#define EIGEN_NO_DEBUG
+#define EIGEN_NO_STATIC_ASSERT
 
 #include <Eigen/Dense>
 #include "log.h"
@@ -135,6 +137,7 @@ std::vector<double> acutal_tcp_acc(3);
 std::vector<double> raw_ft_data(6);
 std::vector<double> filtered_tcp_ft_data(6);
 std::vector<double> contacted_ft_data(6);
+std::vector<double> contacted_ft_no_offset_data(6);
 std::vector<double> current_q(6);
 std::vector<double> pid_compensation(6);
 
@@ -154,6 +157,7 @@ rw::math::Transform3D<> tf_current;
 rw::math::Transform3D<> tf_desired;
 
 rw::math::Wrench6D<> current_ft;
+rw::math::Wrench6D<> current_ft_no_offset;
 rw::math::Wrench6D<> tf_tcp_current_force;
 
 
