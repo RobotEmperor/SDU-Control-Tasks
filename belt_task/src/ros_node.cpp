@@ -11,9 +11,13 @@ RosNode::RosNode(int argc, char **argv, std::string node_name)
 {
   ros::init(argc, argv, node_name);
   task_command_ = "";
-  gain_k_ = 0;
-  gain_i_ = 0;
   gain_p_ = 0;
+  gain_i_ = 0;
+  gain_d_ = 0;
+  force_gain_p_ = 0;
+  force_gain_i_ = 0;
+  force_gain_d_ = 0;
+  test_ = false;
 }
 RosNode::~RosNode()
 {
@@ -24,6 +28,7 @@ void RosNode::initialize()
 
   raw_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/raw_force_torque_data", 10);
   filtered_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/filtered_force_torque_data", 10);
+  pid_compensation_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/pud_compensation_data", 10);
 
   gazebo_shoulder_pan_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_pan_position/command", 10);
   gazebo_shoulder_lift_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_lift_position/command", 10);
@@ -32,26 +37,25 @@ void RosNode::initialize()
   gazebo_wrist_2_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/wrist_2_position/command", 10);
   gazebo_wrist_3_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/wrist_3_position/command", 10);
 
+
   command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::CommandDataMsgCallBack, this);
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
+  force_pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/force_pid_gain_command", 10, &RosNode::ForcePidGainCommandMsgCallBack, this);
+
+  test_sub_ =  nh.subscribe("/sdu/ur10e/test", 10, &RosNode::TestMsgCallBack, this);
+
+  set_point_.assign(7,0);
 }
 void RosNode::CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
-//  for(int num = 0; num < 6 ; num++)
-//  {
-//    desired_pose_matrix(num,1) = msg->data[num];
-//  }
-//  if(msg->data[6] <= 0)
-//    return;
-//
-//  for(int num = 0; num < 6 ; num++)
-//  {
-//    motion_time =  msg->data[6];
-//  }
-//
-//  task_command = "";
-//  ur10e_task->set_point(msg->data[0], msg->data[1], msg->data[2], msg->data[3], msg->data[4], msg->data[5], msg->data[6]);
+  if(msg->data[7] <= 0)
+    return;
+
+  task_command_ = "set_point";
+
+  for(unsigned int num = 0; num < 7; num ++)
+    set_point_[num] = msg->data[num];
 }
 void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
 {
@@ -59,23 +63,48 @@ void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
 }
 void RosNode::PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
-  gain_k_ = msg->data[0];
+  gain_p_ = msg->data[0];
   gain_i_ = msg->data[1];
-  gain_p_ = msg->data[2];
+  gain_d_ = msg->data[2];
+
+  YAML::Emitter y_out;
+  std::string path_ = "../config/pose_pid_gain.yaml";
+
+  y_out << YAML::BeginMap;
+  y_out << YAML::Key << "p_gain";
+  y_out << YAML::Value << gain_p_;
+  y_out << YAML::Key << "i_gain";
+  y_out << YAML::Value << gain_i_;
+  y_out << YAML::Key << "d_gain";
+  y_out << YAML::Value << gain_d_;
+  y_out << YAML::EndMap;
+  std::ofstream fout(path_.c_str());
+  fout << y_out.c_str(); // dump it back into the file
+}
+void RosNode::ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
+{
+  force_gain_p_ = msg->data[0];
+  force_gain_i_ = msg->data[1];
+  force_gain_d_ = msg->data[2];
 
   YAML::Emitter y_out;
   std::string path_ = "../config/force_pid_gain.yaml";
 
   y_out << YAML::BeginMap;
   y_out << YAML::Key << "p_gain";
-  y_out << YAML::Value << gain_k_;
+  y_out << YAML::Value << force_gain_p_;
   y_out << YAML::Key << "i_gain";
-  y_out << YAML::Value << gain_i_;
+  y_out << YAML::Value << force_gain_i_;
   y_out << YAML::Key << "d_gain";
-  y_out << YAML::Value << gain_p_;
+  y_out << YAML::Value << force_gain_d_;
   y_out << YAML::EndMap;
   std::ofstream fout(path_.c_str());
   fout << y_out.c_str(); // dump it back into the file
+}
+void RosNode::TestMsgCallBack (const std_msgs::Bool::ConstPtr& msg)
+{
+  test_ = msg->data;
+  std::cout << "test!!!!!!!!" << test_ << std::endl;
 }
 void RosNode::send_gazebo_command (std::vector<double> gazebo_command)
 {
@@ -120,6 +149,19 @@ void RosNode::send_filtered_ft_data (std::vector<double> filtered_ft_data)
 
   filtered_force_torque_msg_.data.clear();
 }
+void RosNode::send_pid_compensation_data (std::vector<double> pid_compensation_data)
+{
+  pid_compensation_msg_.data.push_back(pid_compensation_data[0]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[1]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[2]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[3]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[4]);
+  pid_compensation_msg_.data.push_back(pid_compensation_data[5]);
+
+  pid_compensation_pub_.publish(pid_compensation_msg_);
+
+  pid_compensation_msg_.data.clear();
+}
 void RosNode::update_ros_data()
 {
   ros::spinOnce();
@@ -130,6 +172,8 @@ void RosNode::shout_down_ros()
   command_sub_.shutdown();
   task_command_sub_.shutdown();
   pid_gain_command_sub_.shutdown();
+  force_pid_gain_command_sub_.shutdown();
+  test_sub_.shutdown();
   //
 
   ros::shutdown();
@@ -138,9 +182,17 @@ std::string RosNode::get_task_command()
 {
   return task_command_;
 }
+std::vector<double> RosNode::get_set_point()
+{
+  return set_point_;
+}
+void RosNode::clear_task_command ()
+{
+  task_command_ = "";
+}
 double RosNode::get_p_gain()
 {
-  return gain_k_;
+  return gain_p_;
 }
 double RosNode::get_i_gain()
 {
@@ -148,5 +200,21 @@ double RosNode::get_i_gain()
 }
 double RosNode::get_d_gain()
 {
-  return gain_p_;
+  return gain_d_;
+}
+double RosNode::get_force_p_gain()
+{
+  return force_gain_p_;
+}
+double RosNode::get_force_i_gain()
+{
+  return force_gain_i_;
+}
+double RosNode::get_force_d_gain()
+{
+  return force_gain_d_;
+}
+bool RosNode::get_test()
+{
+  return test_;
 }

@@ -40,6 +40,8 @@ public:
   void trans_tcp_to_base_motion(std::string load_path_);
   void load_task_motion(std::string path_, std::string motion_);
 
+  void auto_task_motion(bool contact_);
+
   void run_task_motion();
   void generate_trajectory();
 
@@ -50,19 +52,26 @@ public:
   void calculate_init_final_velocity(int point_number);
 
   void clear_task_motion();
+  void clear_phase();
 
   void set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z, double time);
   void set_initial_pose(double x, double y, double z, double axis_x, double axis_y, double axis_z);
-  void set_initial_task_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
   void set_current_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
+
+  void set_pulley_radious(double radious);
 
   void load_data_initialize();
   void load_data_tcp_motion();
 
   void change_motion(std::string motion_);
+  void stop_motion();
 
+  void tf_set_point_base(std::vector<double> tcp_set_point);
+
+  std::vector<double> get_set_point_base();
   std::vector<double> get_current_pose();
   std::vector<double> get_desired_force_torque();
+  unsigned int get_phases_();
 
 private:
   int number_of_point;
@@ -76,11 +85,22 @@ private:
   bool task_done;
   bool base_frame_;
 
+
+  double path_angle_;
+  double path_y_;
+  double change_path_x_;
+  double change_path_y_;
+  double change_path_z_;
+  unsigned int phases_;
+  double radious_;
+
   //initial condition
   //robot's ee position
   std::vector<double> initial_robot_ee_position;
   std::vector<double> bigger_pulley_bearing_position;
+  std::vector<double> smaller_pulley_bearing_position;
   std::vector<double> task_initial_position;
+  std::vector<double> set_point_;
 
   //modified robot position (in relative to base)
   std::map<int, std::vector<double>> motion_start_time_vector;
@@ -116,8 +136,17 @@ private:
   std::shared_ptr<EndEffectorTraj> robot_traj;
   Eigen::MatrixXd desired_pose_matrix;
 
+  Transform3D<> tf_base_to_bearing;
+  Transform3D<> tf_base_to_bearing2;
+  Transform3D<> tf_bearing_to_init;
+  Transform3D<> tf_bearing_to_bearing2;
+  Transform3D<> tf_base_to_init_task;
+  Transform3D<> tf_base_to_contact_point_;
+  Transform3D<> tf_contact_point_to_non_contact_point_;
+
+
   Transform3D<> tf_tcp_desired_pose_;
-  Transform3D<> tf_initial_pose_;
+  Transform3D<> tf_parts_desired_pose_;
   Transform3D<> tf_current_pose_;
   Transform3D<> tf_desired_pose_;
 

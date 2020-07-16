@@ -6,6 +6,8 @@
  */
 #ifndef SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
 #define SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_
+#define EIGEN_NO_DEBUG
+#define EIGEN_NO_STATIC_ASSERT
 
 #include <Eigen/Dense>
 #include "log.h"
@@ -36,19 +38,23 @@
 #include <alchemy/task.h>
 #include <alchemy/timer.h>
 
-#include "sdu_sensor/ft_filter.h"
 #include "sdu_math/end_point_to_rad_cal.h"
 #include "sdu_math/control_function.h"
+#include "sdu_math/statistics_math.h"
 #include "task_motion.h"
 #include "ros_node.h"
 #include "data_logging.h"
 #include "tool_estimation.h"
+
+#include <signal.h> //  our new library
 
 #define WC_FILE "/home/yik/sdu_ws/SDU-Control-Tasks/wc/UR10e_2018/UR10e.xml"
 #define CLOCK_RES 1e-9 //Clock resolution is 1 us by default 1e-9
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
+//RT_TASK loop_task_b;
+//RT_TASK loop_task_c;
 
 using namespace std;
 using namespace ur_rtde;
@@ -60,11 +66,15 @@ using rw::loaders::WorkCellLoader;
 
 void initialize();
 
+std::string robot_ip_a;
+std::string robot_ip_b;
+
 //ros
 std::shared_ptr<RosNode> ros_state;
 std::shared_ptr<DataLogging> data_log;
 
 bool gazebo_check;
+bool exit_program;
 
 //model definition
 WorkCell::Ptr wc;
@@ -80,6 +90,12 @@ double f_kp;
 double f_ki;
 double f_kd;
 
+double p_kp;
+double p_ki;
+double p_kd;
+
+bool contact_check;
+
 //solution check
 bool joint_vel_limits;
 std::vector<Q> solutions;
@@ -91,14 +107,27 @@ std::shared_ptr<TaskMotion> ur10e_task;
 //tool estimation
 std::shared_ptr<ToolEstimation> tool_estimation;
 
+//cusum_method
+std::shared_ptr<StatisticsMath> statistics_math;
+
 //pid controller
 std::shared_ptr<PID_function> force_x_compensator;
 std::shared_ptr<PID_function> force_y_compensator;
 std::shared_ptr<PID_function> force_z_compensator;
 
+std::shared_ptr<PID_function> position_x_controller;
+std::shared_ptr<PID_function> position_y_controller;
+std::shared_ptr<PID_function> position_z_controller;
+
+// lpf
+std::shared_ptr<LowPassFilter> lpf_control;
+
 //robot interface
-std::shared_ptr<RTDEReceiveInterface> rtde_receive;
-std::shared_ptr<RTDEControlInterface> rtde_control;
+std::shared_ptr<RTDEReceiveInterface> rtde_receive_a;
+std::shared_ptr<RTDEControlInterface> rtde_control_a;
+
+std::shared_ptr<RTDEReceiveInterface> rtde_receive_b;
+std::shared_ptr<RTDEControlInterface> rtde_control_b;
 
 //robot states
 std::vector<double> joint_positions(6);
@@ -106,29 +135,29 @@ std::vector<double> actual_tcp_pose(6);
 std::vector<double> target_tcp_pose(6);
 std::vector<double> acutal_tcp_acc(3);
 std::vector<double> raw_ft_data(6);
-std::vector<double> filtered_ft_data(6);
+std::vector<double> filtered_tcp_ft_data(6);
 std::vector<double> contacted_ft_data(6);
+std::vector<double> contacted_ft_no_offset_data(6);
 std::vector<double> current_q(6);
+std::vector<double> pid_compensation(6);
 
 //control states
+std::vector<double> set_point_vector(6);
 std::vector<double> desired_pose_vector(6);
 std::vector<double> desired_force_torque_vector(6);
 std::vector<double> compensated_pose_vector(6);
-
-//matrix type
-Eigen::MatrixXd raw_force_torque_data_matrix;
-Eigen::MatrixXd tool_acc_data_matrix;
-Eigen::MatrixXd tf_current_matrix;
 
 //task motion
 std::string previous_task_command;
 
 //tf
 rw::math::Transform3D<> tf_tcp_desired_pose;
+rw::math::Transform3D<> tf_modified_pose;
 rw::math::Transform3D<> tf_current;
 rw::math::Transform3D<> tf_desired;
 
 rw::math::Wrench6D<> current_ft;
+rw::math::Wrench6D<> current_ft_no_offset;
 rw::math::Wrench6D<> tf_tcp_current_force;
 
 

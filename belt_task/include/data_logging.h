@@ -33,8 +33,10 @@ public:
   void set_data_getTargetTCPPose(std::vector<double> target_pose);
   void set_data_getActualTCPForceTorque(std::vector<double> acutal_ft);
   void set_data_getActualToolAccelerometer(std::vector<double> acutal_acc);
-  void set_data_getFilteredForceTorque(std::vector<double> filtered_ft);
+  void set_data_getFilteredTCPForceTorque(std::vector<double> filtered_tcp_ft);
   void set_data_getContactedForceTorque(std::vector<double> contacted_ft);
+  void set_data_getPidCompensation(std::vector<double> pid_compensation);
+  void set_data_getDesiredTCPPose(std::vector<double> desired_pose);
   void set_data_new_line();
   std::string data_change_to_string(std::vector<double> data);
 
@@ -47,8 +49,10 @@ private:
   std::string getTargetTCPPose_;
   std::string getActualTCPForceTorque_;
   std::string getActualToolAccelerometer_;
-  std::string getFilteredForceTorque_;
+  std::string getFilteredTCPForceTorque_;
   std::string getContactedForceTorque_;
+  std::string getPidCompensation_;
+  std::string getDesiredTCPPose_;
 
 
 };
