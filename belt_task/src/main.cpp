@@ -146,52 +146,10 @@ void loop_task_proc(void *arg)
       tool_estimation->process_estimated_force(raw_ft_data, acutal_tcp_acc);
 
       contacted_ft_data = tool_estimation->get_contacted_force();
-
       current_ft = Wrench6D<> (contacted_ft_data[0], contacted_ft_data[1], contacted_ft_data[2], contacted_ft_data[3], contacted_ft_data[4], contacted_ft_data[5]);
-
-      //contacted_ft_no_offset_data = tool_estimation->get_no_offset_contacted_force();
-
-      //current_ft_no_offset = Wrench6D<> (contacted_ft_no_offset_data[0], contacted_ft_no_offset_data[1], contacted_ft_no_offset_data[2], contacted_ft_no_offset_data[3], contacted_ft_no_offset_data[4], contacted_ft_no_offset_data[5]);
-
       current_ft = (tf_current.R()).inverse()*current_ft;
-      //current_ft_no_offset = (tf_current.R()).inverse()*current_ft_no_offset;
-
       tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
 
-      //      static rw::math::Transform3D<> tf_contacted;
-      //      static rw::math::Transform3D<> tf_contacted_inv;
-      //      static rw::math::Transform3D<> tf_detected;
-      //      static rw::math::Transform3D<> tf_error;
-
-      //      if(current_ft.force()[2] < -3 && !contact_check && temp == 0)
-      //      {
-      //        contact_check = 1;
-      //        temp ++;
-      //        tf_contacted = tf_current;
-      //        cout << "contacted !!!!!!" << tf_contacted.P() << endl;
-      //        //cout << "desried vector !!!!!!" << desired_pose_vector << endl;
-      //      }
-
-      //tf_contacted_inv = tf_contacted;
-
-      //if(contact_check)
-      //{
-      //  //tf_error.P() = tf_contacted.P() - tf_current.P(); // base frame
-      //
-      //  tf_contacted_inv.invMult(tf_contacted_inv, tf_current);
-      //
-      //  //tf_contacted_inv.invMult(tf_contacted_inv, tf_error);
-      //  //tcp frame
-      //  tf_detected = tf_contacted_inv;
-      //
-      //  //cout << "tf_detected.P() :: "  << tf_detected.P() << endl;
-      //
-      //  if(tf_detected.P()[2] > 0.002)
-      //  {
-      //    contact_check = 0;
-      //    cout << "released !!!!!!"  << tf_detected.P()[2] << endl;
-      //  }
-      //}
 
       if(current_ft.force()[1] > 5  && !contact_check)
       {
@@ -202,24 +160,6 @@ void loop_task_proc(void *arg)
       position_x_controller->PID_calculate(desired_pose_vector[0], actual_tcp_pose[0], 0);
       position_y_controller->PID_calculate(desired_pose_vector[1], actual_tcp_pose[1], 0);
       position_z_controller->PID_calculate(desired_pose_vector[2], actual_tcp_pose[2], 0);
-
-      //      if(ur10e_task->get_phases_() == 0 || ur10e_task->get_phases_() == 2)
-      //      {
-      //        force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
-      //        force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0);
-      //        force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0);
-      //
-      //        tf_tcp_desired_pose = Transform3D<> (Vector3D<>(force_x_compensator->get_final_output(),force_y_compensator->get_final_output(),force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
-      //      }
-      //
-      //      if(ur10e_task->get_phases_() == 1)
-      //      {
-      //        force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
-      //        force_y_compensator->PID_calculate(-10,current_ft.force()[1],0);
-      //        force_z_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[2],current_ft.force()[2],0);
-      //
-      //        tf_tcp_desired_pose = Transform3D<> (Vector3D<>(force_x_compensator->get_final_output(),force_y_compensator->get_final_output(),force_z_compensator->get_final_output()), EAA<>(0,0,0).toRotation3D());
-      //      }
 
       force_x_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[0],current_ft.force()[0],0);
       force_y_compensator->PID_calculate(ur10e_task->get_desired_force_torque()[1],current_ft.force()[1],0);
@@ -349,11 +289,6 @@ void loop_task_proc(void *arg)
 
     ros_state->send_raw_ft_data(raw_ft_data);
     ros_state->send_filtered_ft_data(contacted_ft_data);
-    //    ros_state->send_pid_compensation_data(pid_compensation);
-
-    //    ros_state->send_raw_ft_data(desired_pose_vector);
-    //    ros_state->send_filtered_ft_data(compensated_pose_vector);
-    //    ros_state->send_pid_compensation_data(compensated_pose_vector);
 
     //data log save
     data_log->set_time_count(time_count);
@@ -369,9 +304,6 @@ void loop_task_proc(void *arg)
     data_log->set_data_new_line();
 
     previous_task_command = ros_state->get_task_command();
-    //previous_t = (rt_timer_read() - tstart)/1000000.0;
-    // cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
-
     rt_task_wait_period(NULL);
   }
 }
@@ -413,10 +345,6 @@ void initialize()
   position_x_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
   position_y_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
   position_z_controller = std::make_shared<PID_function>(control_time, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
-
-  //lpf
-  //lpf_control = std::make_shared<LowPassFilter>(control_time,3);
-  //lpf_control->initialize();
 
   //robot A
   desired_pose_vector = ur10e_task -> get_current_pose();
@@ -498,16 +426,6 @@ int main (int argc, char **argv)
     rtde_receive_a = std::make_shared<RTDEReceiveInterface>(robot_ip_a);
     rtde_control_a = std::make_shared<RTDEControlInterface>(robot_ip_a);
     rtde_control_a->zeroFtSensor();
-
-    // set ft sensor offset value
-    //    static int current_num_sample = 0;
-    //    while(current_num_sample < 250)
-    //    {
-    //      tool_estimation->set_sensor_offset_value(rtde_receive_a->getActualTCPForce(), 250);
-    //      current_num_sample++;
-    //    }
-    //    current_num_sample = 0;
-    //    cout << tool_estimation->get_sensor_offset_value() << endl;
 
     std::cout << COLOR_YELLOW_BOLD << "Robot A connected to your program" << COLOR_RESET << std::endl;
     std::cout << COLOR_RED_BOLD << "Robot A will move 2 seconds later" << COLOR_RESET << std::endl;
