@@ -38,6 +38,7 @@ set( SOURCE_FILES
   src/ros_node.cpp
   src/main.cpp
   src/tool_estimation.cpp
+  src/ur_robot.cpp
 )
 
 link_directories(/usr/local/lib
