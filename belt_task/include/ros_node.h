@@ -38,7 +38,8 @@ public:
   void TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg);
   void PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
-  void send_gazebo_command (std::vector<double> gazebo_command);
+  void send_gazebo_a_command (std::vector<double> gazebo_command);
+  void send_gazebo_b_command (std::vector<double> gazebo_command);
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
   void send_pid_compensation_data (std::vector<double> pid_compensation_data);
@@ -72,12 +73,20 @@ private:
   ros::Publisher raw_force_torque_pub_;
   ros::Publisher filtered_force_torque_pub_;
   ros::Publisher pid_compensation_pub_;
-  ros::Publisher gazebo_shoulder_pan_position_pub_;
-  ros::Publisher gazebo_shoulder_lift_position_pub_;
-  ros::Publisher gazebo_elbow_position_pub_;
-  ros::Publisher gazebo_wrist_1_position_pub_;
-  ros::Publisher gazebo_wrist_2_position_pub_;
-  ros::Publisher gazebo_wrist_3_position_pub_;
+  ros::Publisher gazebo_a_shoulder_pan_position_pub_;
+  ros::Publisher gazebo_a_shoulder_lift_position_pub_;
+  ros::Publisher gazebo_a_elbow_position_pub_;
+  ros::Publisher gazebo_a_wrist_1_position_pub_;
+  ros::Publisher gazebo_a_wrist_2_position_pub_;
+  ros::Publisher gazebo_a_wrist_3_position_pub_;
+
+  ros::Publisher gazebo_b_shoulder_pan_position_pub_;
+  ros::Publisher gazebo_b_shoulder_lift_position_pub_;
+  ros::Publisher gazebo_b_elbow_position_pub_;
+  ros::Publisher gazebo_b_wrist_1_position_pub_;
+  ros::Publisher gazebo_b_wrist_2_position_pub_;
+  ros::Publisher gazebo_b_wrist_3_position_pub_;
+
 
   ros::Subscriber command_sub_;
   ros::Subscriber task_command_sub_;
@@ -90,12 +99,19 @@ private:
   std_msgs::Float64MultiArray filtered_force_torque_msg_;
   std_msgs::Float64MultiArray pid_compensation_msg_;
 
-  std_msgs::Float64 gazebo_shoulder_pan_position_msg_;
-  std_msgs::Float64 gazebo_shoulder_lift_position_msg_;
-  std_msgs::Float64 gazebo_elbow_position_msg_;
-  std_msgs::Float64 gazebo_wrist_1_position_msg_;
-  std_msgs::Float64 gazebo_wrist_2_position_msg_;
-  std_msgs::Float64 gazebo_wrist_3_position_msg_;
+  std_msgs::Float64 gazebo_a_shoulder_pan_position_msg_;
+  std_msgs::Float64 gazebo_a_shoulder_lift_position_msg_;
+  std_msgs::Float64 gazebo_a_elbow_position_msg_;
+  std_msgs::Float64 gazebo_a_wrist_1_position_msg_;
+  std_msgs::Float64 gazebo_a_wrist_2_position_msg_;
+  std_msgs::Float64 gazebo_a_wrist_3_position_msg_;
+
+  std_msgs::Float64 gazebo_b_shoulder_pan_position_msg_;
+  std_msgs::Float64 gazebo_b_shoulder_lift_position_msg_;
+  std_msgs::Float64 gazebo_b_elbow_position_msg_;
+  std_msgs::Float64 gazebo_b_wrist_1_position_msg_;
+  std_msgs::Float64 gazebo_b_wrist_2_position_msg_;
+  std_msgs::Float64 gazebo_b_wrist_3_position_msg_;
 
   //test
   bool test_;

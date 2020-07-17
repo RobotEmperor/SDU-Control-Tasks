@@ -60,6 +60,7 @@ public:
   void initialize(std::string robot_ip_); // real robot
   void load_initialize_parameter(std::string path_);
   void load_task_motion(std::string path_, std::string task_);
+  void load_tcp_task_motion(std::string path_);
   void simulation_initialize();// simulation
   void init_accelerometer();
   void controller();

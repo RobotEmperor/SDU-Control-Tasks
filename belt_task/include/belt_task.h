@@ -28,6 +28,7 @@
 #define CLOCK_RES 1e-9 //Clock resolution is 1 us by default 1e-9
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 RT_TASK loop_task;
+RT_TASK loop_task_b;
 
 void initialize();
 
@@ -42,6 +43,7 @@ std::shared_ptr<DataLogging> data_log;
 
 //robot select
 std::shared_ptr<UrRobot> robot_A;
+std::shared_ptr<UrRobot> robot_B;
 
 //control
 double control_time;

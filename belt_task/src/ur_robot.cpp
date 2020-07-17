@@ -112,6 +112,10 @@ void UrRobot::load_task_motion(std::string path_, std::string task_)
 {
   ur10e_task->load_task_motion(path_, task_);
 }
+void UrRobot::load_tcp_task_motion(std::string path_)
+{
+  ur10e_task->trans_tcp_to_base_motion(path_);
+}
 void UrRobot::simulation_initialize()
 {
   gazebo_check_ = true;
