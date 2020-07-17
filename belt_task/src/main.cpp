@@ -70,11 +70,11 @@ void loop_task_proc(void *arg)
     if(previous_t > control_time*1000)
       cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
 
-    //cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //cout << COLOR_GREEN_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
     rt_task_wait_period(NULL);
   }
 }
-
+/*
 void loop_task_proc_b(void *arg)
 {
   RT_TASK *curtask;
@@ -128,10 +128,10 @@ void loop_task_proc_b(void *arg)
     if(previous_t > control_time*1000)
       cout << COLOR_RED_BOLD << "Exceed control time B "<< previous_t << COLOR_RESET << endl;
 
-    //cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+    //cout << COLOR_GREEN_BOLD << "Exceed control time B "<< previous_t << COLOR_RESET << endl;
     rt_task_wait_period(NULL);
   }
-}
+}*/
 void initialize()
 {
   control_time = 0.002;
@@ -140,19 +140,19 @@ void initialize()
   robot_A = std::make_shared<UrRobot>(control_time);
   robot_A ->load_initialize_parameter(path_);
 
-  robot_B = std::make_shared<UrRobot>(control_time);
-  robot_B ->load_initialize_parameter(path_);
+  //robot_B = std::make_shared<UrRobot>(control_time);
+  //robot_B ->load_initialize_parameter(path_);
 
   //load motion data
   path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/initialize_belt_task.yaml";
   robot_A ->load_task_motion(path_, "initialize_belt_task");
-  robot_B ->load_task_motion(path_, "initialize_belt_task");
+  //robot_B ->load_task_motion(path_, "initialize_belt_task");
   path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/initialize.yaml";
   robot_A ->load_task_motion(path_, "initialize");
-  robot_B ->load_task_motion(path_, "initialize");
+  //robot_B ->load_task_motion(path_, "initialize");
   path_ = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/motion/tcp_belt_task.yaml";
   robot_A ->load_tcp_task_motion(path_);
-  robot_B ->load_tcp_task_motion(path_);
+  //robot_B ->load_tcp_task_motion(path_);
 
   //simulation check
   gazebo_check = true;
@@ -199,12 +199,12 @@ int main (int argc, char **argv)
   if(gazebo_check)
   {
     ros_state->send_gazebo_a_command(robot_A->get_desired_q_());
-    ros_state->send_gazebo_b_command(robot_B->get_desired_q_());
+    //ros_state->send_gazebo_b_command(robot_B->get_desired_q_());
   }
   else
   {
     robot_A->initialize("192.168.1.130");
-    robot_B->initialize("192.168.1.130");
+    //robot_B->initialize("192.168.1.129");
   }
   std::cout << COLOR_GREEN << "All of things were initialized!" << COLOR_RESET << std::endl;
 
@@ -217,8 +217,10 @@ int main (int argc, char **argv)
   rt_task_create(&loop_task, str, 0, 99, 0);//Create the real time task
   rt_task_start(&loop_task, &loop_task_proc, 0);//Since task starts in suspended mode, start task
 
-  rt_task_create(&loop_task_b, str, 0, 98, 0);//Create the real time task
-  rt_task_start(&loop_task_b, &loop_task_proc_b, 0);//Since task starts in suspended mode, start task
+  //sprintf(str, "robot b");
+
+  //rt_task_create(&loop_task_b, str, 0, 98, 0);//Create the real time task
+  //rt_task_start(&loop_task_b, &loop_task_proc_b, 0);//Since task starts in suspended mode, start task
 
   std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;
 
@@ -227,7 +229,7 @@ int main (int argc, char **argv)
   {
   }
   rt_task_delete(&loop_task);
-  rt_task_delete(&loop_task_b);
+  //rt_task_delete(&loop_task_b);
 
   usleep(3000000);
 
@@ -238,7 +240,7 @@ int main (int argc, char **argv)
   if(!gazebo_check)
   {
     robot_A->robot_servo_stop();
-    robot_B->robot_servo_stop();
+    //robot_B->robot_servo_stop();
   }
   return 0;
 }
