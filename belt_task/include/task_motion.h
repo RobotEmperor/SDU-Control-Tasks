@@ -54,7 +54,7 @@ public:
   void clear_task_motion();
   void clear_phase();
 
-  void set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z, double time);
+  void set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z);
   void set_initial_pose(double x, double y, double z, double axis_x, double axis_y, double axis_z);
   void set_current_pose_eaa(double x, double y, double z, double axis_x, double axis_y, double axis_z);
 

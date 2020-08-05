@@ -86,13 +86,13 @@ void loop_task_proc(void *arg)
     {
       if(!ros_state->get_task_command().compare("set_point"))
       {
-        static double set_point_motion_time_ = 0.0;
-        set_point_motion_time_ = ros_state->get_set_point()[6];
-        ur10e_task->tf_set_point_base(ros_state->get_set_point());
-        set_point_vector = ur10e_task->get_set_point_base();
-        ur10e_task->set_point(set_point_vector[0], set_point_vector[1], set_point_vector[2], set_point_vector[3], set_point_vector[4], set_point_vector[5], set_point_motion_time_);
-        ur10e_task->generate_trajectory();
-        ros_state->clear_task_command();
+        //static double set_point_motion_time_ = 0.0;
+        //set_point_motion_time_ = ros_state->get_set_point()[6];
+        //ur10e_task->tf_set_point_base(ros_state->get_set_point());
+        set_point_vector = ros_state->get_set_point();
+        ur10e_task->set_point(set_point_vector[0], set_point_vector[1], set_point_vector[2], set_point_vector[3], set_point_vector[4], set_point_vector[5]); // base frame
+        //ur10e_task->generate_trajectory();
+        //ros_state->clear_task_command();
       }
       else
       {
@@ -151,7 +151,7 @@ void loop_task_proc(void *arg)
       tf_current = Transform3D<> (Vector3D<>(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2]), EAA<>(actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]).toRotation3D());
 
 
-      if(current_ft.force()[1] > 5  && !contact_check)
+      if(current_ft.force()[1] > 5  && !contact_check) // tool frame
       {
         contact_check = 1;
         cout << "A rubber belt was inserted in a pulley" << endl;
@@ -289,6 +289,7 @@ void loop_task_proc(void *arg)
 
     ros_state->send_raw_ft_data(raw_ft_data);
     ros_state->send_filtered_ft_data(contacted_ft_data);
+    ros_state->send_robot_state(actual_tcp_pose);
 
     //data log save
     data_log->set_time_count(time_count);

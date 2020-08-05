@@ -34,7 +34,7 @@ public:
   void update_ros_data();
   void shout_down_ros();
 
-  void CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
+  void EeCommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg);
   void PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
@@ -42,6 +42,7 @@ public:
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
   void send_pid_compensation_data (std::vector<double> pid_compensation_data);
+  void send_robot_state (std::vector<double> robot_state);
 
   void clear_task_command ();
 
@@ -79,7 +80,7 @@ private:
   ros::Publisher gazebo_wrist_2_position_pub_;
   ros::Publisher gazebo_wrist_3_position_pub_;
 
-  ros::Subscriber command_sub_;
+  ros::Subscriber ee_command_sub_;
   ros::Subscriber task_command_sub_;
   ros::Subscriber pid_gain_command_sub_;
   ros::Subscriber force_pid_gain_command_sub_;
@@ -96,6 +97,11 @@ private:
   std_msgs::Float64 gazebo_wrist_1_position_msg_;
   std_msgs::Float64 gazebo_wrist_2_position_msg_;
   std_msgs::Float64 gazebo_wrist_3_position_msg_;
+
+  //messages for RL
+  ros::Publisher robot_state_pub_;
+
+  std_msgs::Float64MultiArray robot_state_msg_;
 
   //test
   bool test_;

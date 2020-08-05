@@ -29,6 +29,7 @@ void RosNode::initialize()
   raw_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/raw_force_torque_data", 10);
   filtered_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/filtered_force_torque_data", 10);
   pid_compensation_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/pud_compensation_data", 10);
+  robot_state_pub_= nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/robot_state", 10);
 
   gazebo_shoulder_pan_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_pan_position/command", 10);
   gazebo_shoulder_lift_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_lift_position/command", 10);
@@ -38,23 +39,20 @@ void RosNode::initialize()
   gazebo_wrist_3_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/wrist_3_position/command", 10);
 
 
-  command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::CommandDataMsgCallBack, this);
+  ee_command_sub_ = nh.subscribe("/sdu/ur10e/ee_command", 10, &RosNode::EeCommandDataMsgCallBack, this);
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
   force_pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/force_pid_gain_command", 10, &RosNode::ForcePidGainCommandMsgCallBack, this);
 
   test_sub_ =  nh.subscribe("/sdu/ur10e/test", 10, &RosNode::TestMsgCallBack, this);
 
-  set_point_.assign(7,0);
+  set_point_.assign(6,0);
 }
-void RosNode::CommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
+void RosNode::EeCommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
-  if(msg->data[7] <= 0)
-    return;
-
   task_command_ = "set_point";
 
-  for(unsigned int num = 0; num < 7; num ++)
+  for(unsigned int num = 0; num < 6; num ++)
     set_point_[num] = msg->data[num];
 }
 void RosNode::TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg)
@@ -162,6 +160,19 @@ void RosNode::send_pid_compensation_data (std::vector<double> pid_compensation_d
 
   pid_compensation_msg_.data.clear();
 }
+void RosNode::send_robot_state (std::vector<double> robot_state)
+{
+  robot_state_msg_.data.push_back(robot_state[0]);
+  robot_state_msg_.data.push_back(robot_state[1]);
+  robot_state_msg_.data.push_back(robot_state[2]);
+
+  robot_state_msg_.data.push_back(robot_state[3]);
+  robot_state_msg_.data.push_back(robot_state[4]);
+  robot_state_msg_.data.push_back(robot_state[5]);
+
+  robot_state_pub_.publish(robot_state_msg_);
+  robot_state_msg_.data.clear();
+}
 void RosNode::update_ros_data()
 {
   ros::spinOnce();
@@ -169,7 +180,7 @@ void RosNode::update_ros_data()
 void RosNode::shout_down_ros()
 {
   // mutex lock release
-  command_sub_.shutdown();
+  ee_command_sub_.shutdown();
   task_command_sub_.shutdown();
   pid_gain_command_sub_.shutdown();
   force_pid_gain_command_sub_.shutdown();

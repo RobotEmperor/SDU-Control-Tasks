@@ -636,24 +636,14 @@ void TaskMotion::set_initial_pose(double x, double y, double z, double axis_x, d
   robot_traj->cal_end_point_tra_betta->current_pose = current_pose_vector[4];
   robot_traj->cal_end_point_tra_kamma->current_pose = current_pose_vector[5];
 }
-void TaskMotion::set_point(double x, double y, double z, double roll, double pitch, double yaw, double time)
+void TaskMotion::set_point(double x, double y, double z, double axis_x, double axis_y, double axis_z)
 {
-  desired_pose_matrix.fill(0);
-  for(int num = 0; num <6 ; num ++)
-  {
-    desired_pose_matrix(num,0) =  current_pose_vector[num];
-  }
-  desired_pose_matrix(0,1) = x;
-  desired_pose_matrix(1,1) = y;
-  desired_pose_matrix(2,1) = z;
-  desired_pose_matrix(3,1) = roll;
-  desired_pose_matrix(4,1) = pitch;
-  desired_pose_matrix(5,1) = yaw;
-
-  for(int num = 0; num <6 ; num ++)
-  {
-    desired_pose_matrix(num,7) = time;
-  }
+  current_pose_vector[0] = x;
+  current_pose_vector[1] = y;
+  current_pose_vector[2] = z;
+  current_pose_vector[3] = axis_x;
+  current_pose_vector[4] = axis_y;
+  current_pose_vector[5] = axis_z;
 
   clear_task_motion();
   std::cout << "receive set point command" << std::endl;
@@ -669,6 +659,19 @@ void TaskMotion::clear_task_motion()
   current_point = -1;
   motion_start_time_vector.clear();
   motion_task_pose_vector.clear();
+
+  for(int num = 0; num <6 ; num ++)
+  {
+    desired_pose_matrix(num,0) =  current_pose_vector[num];
+    desired_pose_matrix(num,1) =  current_pose_vector[num];
+    robot_traj->current_pose_change(num,0) = current_pose_vector[num];
+  }
+  robot_traj->cal_end_point_tra_px->current_pose = current_pose_vector[0];
+  robot_traj->cal_end_point_tra_py->current_pose = current_pose_vector[1];
+  robot_traj->cal_end_point_tra_pz->current_pose = current_pose_vector[2];
+  robot_traj->cal_end_point_tra_alpha->current_pose = current_pose_vector[3];
+  robot_traj->cal_end_point_tra_betta->current_pose = current_pose_vector[4];
+  robot_traj->cal_end_point_tra_kamma->current_pose = current_pose_vector[5];
 }
 void TaskMotion::clear_phase()
 {
