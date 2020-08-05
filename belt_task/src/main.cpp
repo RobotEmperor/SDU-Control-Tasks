@@ -17,7 +17,7 @@ void loop_task_proc(void *arg)
   ClosedFormIKSolverUR solver(device, state);
   solver.setCheckJointLimits(true);
 
-  //  RT_TASK *curtask;
+  // RT_TASK *curtask;
   //  RT_TASK_INFO curtaskinfo;
 
   //
