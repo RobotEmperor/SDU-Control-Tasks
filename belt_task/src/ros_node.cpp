@@ -29,7 +29,9 @@ void RosNode::initialize()
   raw_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/raw_force_torque_data", 10);
   filtered_force_torque_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/filtered_force_torque_data", 10);
   pid_compensation_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/pud_compensation_data", 10);
-  robot_state_pub_= nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/robot_state", 10);
+  error_ee_pose_pub_= nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/error_ee_pose", 10);
+  ee_velocity_pub_ = nh.advertise<std_msgs::Float64MultiArray>("/sdu/ur10e/ee_velocity", 10);
+  satefy_violation_pub_ = nh.advertise<std_msgs::Bool>("/sdu/ur10e/safety_violation", 10);
 
   gazebo_shoulder_pan_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_pan_position/command", 10);
   gazebo_shoulder_lift_position_pub_ = nh.advertise<std_msgs::Float64>("/ur10e_robot/shoulder_lift_position/command", 10);
@@ -160,18 +162,35 @@ void RosNode::send_pid_compensation_data (std::vector<double> pid_compensation_d
 
   pid_compensation_msg_.data.clear();
 }
-void RosNode::send_robot_state (std::vector<double> robot_state)
+void RosNode::send_error_ee_pose (std::vector<double> error_ee_pose)
 {
-  robot_state_msg_.data.push_back(robot_state[0]);
-  robot_state_msg_.data.push_back(robot_state[1]);
-  robot_state_msg_.data.push_back(robot_state[2]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[0]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[1]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[2]);
 
-  robot_state_msg_.data.push_back(robot_state[3]);
-  robot_state_msg_.data.push_back(robot_state[4]);
-  robot_state_msg_.data.push_back(robot_state[5]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[3]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[4]);
+  error_ee_pose_msg_.data.push_back(error_ee_pose[5]);
 
-  robot_state_pub_.publish(robot_state_msg_);
-  robot_state_msg_.data.clear();
+  error_ee_pose_pub_.publish(error_ee_pose_msg_);
+  error_ee_pose_msg_.data.clear();
+}
+void RosNode::send_ee_velocity (std::vector<double> ee_velocity)
+{
+  ee_velocity_msg_.data.push_back(ee_velocity[0]);
+  ee_velocity_msg_.data.push_back(ee_velocity[1]);
+  ee_velocity_msg_.data.push_back(ee_velocity[2]);
+  ee_velocity_msg_.data.push_back(ee_velocity[3]);
+  ee_velocity_msg_.data.push_back(ee_velocity[4]);
+  ee_velocity_msg_.data.push_back(ee_velocity[5]);
+
+  ee_velocity_pub_.publish(ee_velocity_msg_);
+  ee_velocity_msg_.data.clear();
+}
+void RosNode::send_satefy_violation (bool satefy_violation)
+{
+  satefy_violation_msg_.data = satefy_violation;
+  satefy_violation_pub_.publish(satefy_violation_msg_);
 }
 void RosNode::update_ros_data()
 {

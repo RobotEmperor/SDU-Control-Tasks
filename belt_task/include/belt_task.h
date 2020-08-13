@@ -132,6 +132,7 @@ std::shared_ptr<RTDEControlInterface> rtde_control_b;
 //robot states
 std::vector<double> joint_positions(6);
 std::vector<double> actual_tcp_pose(6);
+std::vector<double> actual_tcp_speed(6);
 std::vector<double> target_tcp_pose(6);
 std::vector<double> acutal_tcp_acc(3);
 std::vector<double> raw_ft_data(6);
@@ -146,6 +147,7 @@ std::vector<double> set_point_vector(6);
 std::vector<double> desired_pose_vector(6);
 std::vector<double> desired_force_torque_vector(6);
 std::vector<double> compensated_pose_vector(6);
+std::vector<double> error_ee_pose(6);
 
 //task motion
 std::string previous_task_command;

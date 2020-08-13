@@ -135,6 +135,7 @@ void loop_task_proc(void *arg)
       raw_ft_data     = rtde_receive_a->getActualTCPForce();
       acutal_tcp_acc  = rtde_receive_a->getActualToolAccelerometer();
       actual_tcp_pose = rtde_receive_a->getActualTCPPose();
+      actual_tcp_speed = rtde_receive_a->getActualTCPSpeed();
       //joint_positions = rtde_receive_a->getActualQ();
 
       ur10e_task->set_current_pose_eaa(actual_tcp_pose[0], actual_tcp_pose[1], actual_tcp_pose[2],actual_tcp_pose[3], actual_tcp_pose[4], actual_tcp_pose[5]);
@@ -221,6 +222,13 @@ void loop_task_proc(void *arg)
       compensated_pose_vector[5] = desired_pose_vector[5]; //+ force_x_compensator->get_final_output();
     }
 
+    error_ee_pose[0] = position_x_controller->get_error();
+    error_ee_pose[1] = position_y_controller->get_error();
+    error_ee_pose[2] = position_z_controller->get_error();
+    error_ee_pose[3] = 0; //position_x_controller->get_error();
+    error_ee_pose[4] = 0; //position_x_controller->get_error();
+    error_ee_pose[5] = 0; //position_x_controller->get_error();
+
 
     tf_desired = Transform3D<> (Vector3D<>(compensated_pose_vector[0], compensated_pose_vector[1], compensated_pose_vector[2]),
         EAA<>(compensated_pose_vector[3], compensated_pose_vector[4], compensated_pose_vector[5]).toRotation3D());
@@ -260,6 +268,8 @@ void loop_task_proc(void *arg)
         cout << "::" << num << "::" << fabs((solutions[1].toStdVector()[num] - current_q[num])/control_time) << endl;
         std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
         joint_vel_limits = true;
+        ros_state->send_satefy_violation(1);
+
       }
     }
 
@@ -289,7 +299,8 @@ void loop_task_proc(void *arg)
 
     ros_state->send_raw_ft_data(raw_ft_data);
     ros_state->send_filtered_ft_data(contacted_ft_data);
-    ros_state->send_robot_state(actual_tcp_pose);
+    ros_state->send_error_ee_pose(error_ee_pose);
+    ros_state->send_ee_velocity(actual_tcp_speed);
 
     //data log save
     data_log->set_time_count(time_count);

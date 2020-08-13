@@ -42,7 +42,9 @@ public:
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
   void send_pid_compensation_data (std::vector<double> pid_compensation_data);
-  void send_robot_state (std::vector<double> robot_state);
+  void send_error_ee_pose (std::vector<double> error_ee_pose);
+  void send_ee_velocity (std::vector<double> ee_velocity);
+  void send_satefy_violation (bool satefy_violation);
 
   void clear_task_command ();
 
@@ -99,9 +101,13 @@ private:
   std_msgs::Float64 gazebo_wrist_3_position_msg_;
 
   //messages for RL
-  ros::Publisher robot_state_pub_;
+  ros::Publisher error_ee_pose_pub_;
+  ros::Publisher ee_velocity_pub_;
+  ros::Publisher satefy_violation_pub_;
 
-  std_msgs::Float64MultiArray robot_state_msg_;
+  std_msgs::Float64MultiArray error_ee_pose_msg_;
+  std_msgs::Float64MultiArray ee_velocity_msg_;
+  std_msgs::Bool satefy_violation_msg_;
 
   //test
   bool test_;
