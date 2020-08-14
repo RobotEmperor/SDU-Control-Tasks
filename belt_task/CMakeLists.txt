@@ -18,16 +18,18 @@ pkg_check_modules(yaml_cpp yaml-cpp REQUIRED)
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/include
                      /opt/ros/melodic/include
-                     /usr/xenomai/include
+                     /home/yik/xenomai
+                     /usr/include/xenomai
                      ${EIGEN3_INCLUDE_DIR}
                      ${ROBWORK_INCLUDE_DIR}
                      ${yaml_cpp_INCLUDE_DIRS}
+                     /home/yik/sdu_ws/include
                      )
                      
 
 
-execute_process(COMMAND /usr/xenomai/bin/xeno-config --skin=alchemy --cflags OUTPUT_VARIABLE XENO_ALCHENMY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND /usr/xenomai/bin/xeno-config --skin=alchemy --ldflags OUTPUT_VARIABLE XENO_ALCHENMY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND /home/yik/xenomai/bin/xeno-config --skin=alchemy --cflags OUTPUT_VARIABLE XENO_ALCHENMY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND /home/yik/xenomai/bin/xeno-config --skin=alchemy --ldflags OUTPUT_VARIABLE XENO_ALCHENMY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${XENO_ALCHENMY_CFLAGS} ${XENO_ALCHENMY_LDFLAGS}")
 
@@ -40,8 +42,11 @@ set( SOURCE_FILES
   src/tool_estimation.cpp
 )
 
-link_directories(/usr/local/lib
-                 /opt/ros/melodic/lib)
+link_directories(${CMAKE_SOURCE_DIR}/lib
+                 /home/yik/sdu_ws/lib
+                 /opt/ros/melodic/lib
+                 /home/yik/xenomai/lib
+                 /usr/lib)
 
 
 add_executable(belt_task ${SOURCE_FILES})
