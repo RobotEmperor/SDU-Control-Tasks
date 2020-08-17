@@ -59,11 +59,13 @@ void loop_task_proc(void *arg)
 
   while(1)
   {
+    bool task_completed = false;
     static double previous_t = 0.0;
-    tstart = rt_timer_read();
     time_count += control_time;
 
     ros_state->update_ros_data();
+
+    cout << COLOR_YELLOW_BOLD << task_completed << COLOR_RESET << endl;
 
     //do something
     //check if task command is received or not
@@ -286,15 +288,18 @@ void loop_task_proc(void *arg)
 
       if(!gazebo_check)
       {
-
-        rtde_control_a->servoJ(test_q_,0,0,control_time,0.04,2000);
+        tstart = rt_timer_read();
+        //rtde_control_a->servoJ(test_q_,0,0,control_time,0.04,2000);
+        task_completed = rtde_control_a->servoJ(test_q_,0,0,control_time,0.04,2000);
+        //cout << COLOR_GREEN_BOLD << task_completed << "Send time :"<< COLOR_RESET << endl;
 
         //for test
-        //ros_state->send_gazebo_command(solutions[1].toStdVector());
         //check if there is out of the real-time control
         previous_t = (rt_timer_read() - tstart)/1000000.0;
-        if(previous_t > 2)
-          cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
+        cout << COLOR_GREEN_BOLD << "Check task's completion : " << task_completed << "Send time : "<< previous_t << COLOR_RESET << endl;
+
+        //if(previous_t > 2)
+          //cout << COLOR_RED_BOLD << "Exceed control time A "<< previous_t << COLOR_RESET << endl;
       }
       else
       {
