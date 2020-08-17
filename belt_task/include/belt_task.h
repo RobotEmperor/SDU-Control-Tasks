@@ -149,6 +149,8 @@ std::vector<double> desired_force_torque_vector(6);
 std::vector<double> compensated_pose_vector(6);
 std::vector<double> error_ee_pose(6);
 
+std::vector<double> test_q_(6);
+
 //task motion
 std::string previous_task_command;
 
