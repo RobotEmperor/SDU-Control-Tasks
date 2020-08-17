@@ -38,6 +38,7 @@ public:
   void TaskCommandDataMsgCallBack (const std_msgs::String::ConstPtr& msg);
   void PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
+  void RlActionMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void send_gazebo_command (std::vector<double> gazebo_command);
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
@@ -51,6 +52,7 @@ public:
   void TestMsgCallBack (const std_msgs::Bool::ConstPtr& msg);
 
   std::vector<double> get_set_point();
+  std::vector<double> get_rl_action();
   double get_p_gain();
   double get_i_gain();
   double get_d_gain();
@@ -86,6 +88,7 @@ private:
   ros::Subscriber task_command_sub_;
   ros::Subscriber pid_gain_command_sub_;
   ros::Subscriber force_pid_gain_command_sub_;
+  ros::Subscriber rl_action_sub_;
 
   ros::Subscriber test_sub_;
 
@@ -109,6 +112,8 @@ private:
   std_msgs::Float64MultiArray ee_velocity_msg_;
   std_msgs::Bool satefy_violation_msg_;
 
+  //
+  std::vector<double> rl_action;
   //test
   bool test_;
 };

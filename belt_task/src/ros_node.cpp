@@ -45,10 +45,18 @@ void RosNode::initialize()
   task_command_sub_ = nh.subscribe("/sdu/ur10e/task_command", 10, &RosNode::TaskCommandDataMsgCallBack, this);
   pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/pid_gain_command", 10, &RosNode::PidGainCommandMsgCallBack, this);
   force_pid_gain_command_sub_ = nh.subscribe("/sdu/ur10e/force_pid_gain_command", 10, &RosNode::ForcePidGainCommandMsgCallBack, this);
+  rl_action_sub_ = nh.subscribe("/sdu/ur10e/rl_action", 10, &RosNode::RlActionMsgCallBack, this);
 
   test_sub_ =  nh.subscribe("/sdu/ur10e/test", 10, &RosNode::TestMsgCallBack, this);
 
   set_point_.assign(6,0);
+  rl_action.assign(6,0);
+}
+void RosNode::RlActionMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
+{
+  //printf("msg->data.size() ; %f", msg->data[5]);
+  for(unsigned int num = 0; num < 6; num ++)
+    rl_action[num] = msg->data[num];
 }
 void RosNode::EeCommandDataMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
@@ -203,6 +211,7 @@ void RosNode::shout_down_ros()
   task_command_sub_.shutdown();
   pid_gain_command_sub_.shutdown();
   force_pid_gain_command_sub_.shutdown();
+  rl_action_sub_.shutdown();
   test_sub_.shutdown();
   //
 
@@ -215,6 +224,10 @@ std::string RosNode::get_task_command()
 std::vector<double> RosNode::get_set_point()
 {
   return set_point_;
+}
+std::vector<double> RosNode::get_rl_action()
+{
+  return rl_action;
 }
 void RosNode::clear_task_command ()
 {
