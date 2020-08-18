@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <alchemy/task.h>
 #include <alchemy/timer.h>
+#include <pthread.h>
 
 #include "sdu_math/end_point_to_rad_cal.h"
 #include "sdu_math/control_function.h"
@@ -53,7 +54,10 @@
 #define LOOP_PERIOD 2e6 //Expressed in ticks // 2ms control time
 //RTIME period = 1000000000;
 RT_TASK loop_task;
-//RT_TASK loop_task_b;
+RT_TASK loop_task_b;
+
+cpu_set_t mask_a;
+cpu_set_t mask_b;
 //RT_TASK loop_task_c;
 
 using namespace std;

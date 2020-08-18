@@ -64,7 +64,12 @@ public:
 
   std::string get_task_command();
 
+  //Robot B
+  void send_gazebo_b_command (std::vector<double> gazebo_command);
+
 private:
+
+  //robot A
 
   double gain_p_, gain_i_, gain_d_;
   double force_gain_p_, force_gain_i_, force_gain_d_;
@@ -108,6 +113,22 @@ private:
   std_msgs::Float64MultiArray error_ee_pose_msg_;
   std_msgs::Float64MultiArray ee_velocity_msg_;
   std_msgs::Bool satefy_violation_msg_;
+
+  //robot B
+
+  ros::Publisher gazebo_shoulder_pan_position_b_pub_;
+  ros::Publisher gazebo_shoulder_lift_position_b_pub_;
+  ros::Publisher gazebo_elbow_position_b_pub_;
+  ros::Publisher gazebo_wrist_1_position_b_pub_;
+  ros::Publisher gazebo_wrist_2_position_b_pub_;
+  ros::Publisher gazebo_wrist_3_position_b_pub_;
+
+  std_msgs::Float64 gazebo_shoulder_pan_position_b_msg_;
+  std_msgs::Float64 gazebo_shoulder_lift_position_b_msg_;
+  std_msgs::Float64 gazebo_elbow_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_1_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_2_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_3_position_b_msg_;
 
   //test
   bool test_;
