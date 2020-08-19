@@ -1,0 +1,29 @@
+<Joint name="Joint1" type="Revolute">
+	<Pos>0 0 0.1807</Pos>
+	<RPY>0 0 90</RPY>
+</Joint>
+
+<Joint name="Joint2" type="Revolute">
+	<Pos>-0.6127 0 0</Pos>
+	<RPY>0 0 0</RPY>
+</Joint>
+
+<Joint name="Joint3" type="Revolute">
+	<Pos>-0.57155 0 0</Pos>
+	<RPY>0 0 0</RPY>
+</Joint>
+
+<Joint name="Joint4" type="Revolute">
+	<Pos>0 0 0.17415</Pos>
+	<RPY>0 0 90</RPY>
+</Joint>
+
+<Joint name="Joint5" type="Revolute">
+	<Pos>0 0 0.11985</Pos>
+	<RPY>0 0 -90</RPY>
+</Joint>
+
+<Joint name="Joint6" type="Revolute">
+	<Pos>0 0 0.11655</Pos>
+	<RPY>0 0 0</RPY>
+</Joint>

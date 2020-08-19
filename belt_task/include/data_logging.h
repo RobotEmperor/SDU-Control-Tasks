@@ -22,7 +22,7 @@
 class DataLogging
 {
 public:
-  DataLogging();
+  DataLogging(std::string robot_name);
   ~DataLogging();
 
   void initialize();
@@ -42,6 +42,7 @@ public:
 
 private:
   std::ofstream* out;
+  std::string path_;
   std::string data_line_;
   std::string time_count_;
   std::string getActualQ_;

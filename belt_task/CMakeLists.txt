@@ -27,8 +27,8 @@ INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR}/include
                      
 
 
-execute_process(COMMAND xeno-config --skin=alchemy --cflags OUTPUT_VARIABLE XENO_ALCHENMY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND xeno-config --skin=alchemy --ldflags OUTPUT_VARIABLE XENO_ALCHENMY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND /usr/xenomai/bin/xeno-config --skin=alchemy --cflags OUTPUT_VARIABLE XENO_ALCHENMY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND /usr/xenomai/bin/xeno-config --skin=alchemy --ldflags OUTPUT_VARIABLE XENO_ALCHENMY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${XENO_ALCHENMY_CFLAGS} ${XENO_ALCHENMY_LDFLAGS}")
 
@@ -39,6 +39,7 @@ set( SOURCE_FILES
   src/ros_node.cpp
   src/main.cpp
   src/tool_estimation.cpp
+  src/task_robot.cpp
 )
 
 link_directories(${CMAKE_SOURCE_DIR}/lib

@@ -78,14 +78,6 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   for(int num = 0; num < 6; num ++)
     task_initial_position.push_back(task_initial_position_node[num].as<double>());
 
-
-  //  std::cout << initial_robot_ee_position << std::endl;
-  //  std::cout << bigger_pulley_bearing_position << std::endl;
-  //  std::cout << task_initial_position << std::endl;
-
-  // Transform3D<> tf_base_to_bearing2_plain;
-  // tf_base_to_bearing2_plain = Transform3D<> (Vector3D<> (-0.640481, -0.0055886, 0.245102), EAA<>(initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]).toRotation3D());
-
   set_initial_pose(initial_robot_ee_position[0], initial_robot_ee_position[1], initial_robot_ee_position[2], initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]); // set to be robot initial values
 
   tf_base_to_bearing = Transform3D<> (Vector3D<>(bigger_pulley_bearing_position[0], bigger_pulley_bearing_position[1], bigger_pulley_bearing_position[2]), EAA<>(bigger_pulley_bearing_position[3], bigger_pulley_bearing_position[4], bigger_pulley_bearing_position[5]).toRotation3D());
@@ -95,19 +87,8 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   tf_base_to_init_task = tf_base_to_bearing*tf_bearing_to_init;
   tf_base_to_bearing2 = tf_base_to_bearing*tf_bearing_to_bearing2;
 
-  //  tf_base_to_init_task.invMult(tf_base_to_init_task, tf_base_to_bearing2_plain);
-
-
   std::cout << tf_base_to_init_task << std::endl;
   std::cout << tf_base_to_bearing2 << std::endl;
-
-  //smaller_pulley_bearing_position[0] = Vector3D<> (tf_base_to_bearing2.P())[0];;
-  //smaller_pulley_bearing_position[1] = Vector3D<> (tf_base_to_bearing2.P())[1];;
-  //smaller_pulley_bearing_position[2] = Vector3D<> (tf_base_to_bearing2.P())[2];;
-  //
-  //smaller_pulley_bearing_position[3] = EAA<> (tf_base_to_bearing2.R())[0];
-  //smaller_pulley_bearing_position[4] = EAA<> (tf_base_to_bearing2.R())[1];
-  //smaller_pulley_bearing_position[5] = EAA<> (tf_base_to_bearing2.R())[2];
 }
 void TaskMotion::robot_initialize() // joint space
 {

@@ -1,0 +1,57 @@
+tool_mass: 1.75
+initial_joint_states: [2.6559, -1.85396, -2.03763, -2.38718, -2.84058, -3.13698]
+initial_robot_ee_position: [-0.6649675947900577, 0.2054059150102794, 0.25997552421325143, -0.7298511759689527, -1.7577922996928013, 1.760382318187891]
+bigger_pulley_bearing_position: [-0.739757210413974, 0.07993900394775277, 0.2449995438351456, -0.7217029684216122, -1.7591780460014375, 1.7685571865188172]
+task_initial_position: [-0.13, 0, -0.025, 0,0,0] # in relative to bigger pulley bearing's frame.
+
+#force controller gain
+f_x_kp : 0.0003
+f_x_ki : 1
+f_x_kd : 2
+
+f_y_kp : 3
+f_y_ki : 4
+f_y_kd : 5
+
+f_z_kp : 6
+f_z_ki : 7
+f_z_kd : 8
+
+f_eaa_x_kp : 9
+f_eaa_x_ki : 10
+f_eaa_x_kd : 11
+
+f_eaa_y_kp : 12
+f_eaa_y_ki : 13
+f_eaa_y_kd : 14
+
+f_eaa_z_kp : 15
+f_eaa_z_ki : 16
+f_eaa_z_kd : 17
+
+#position controller gain
+p_x_kp : 0.225
+p_x_ki : 18
+p_x_kd : 19
+
+p_y_kp : 20
+p_y_ki : 21
+p_y_kd : 22
+
+p_z_kp : 23
+p_z_ki : 24
+p_z_kd : 25
+
+p_eaa_x_kp : 26
+p_eaa_x_ki : 27
+p_eaa_x_kd : 28
+
+p_eaa_y_kp : 29
+p_eaa_y_ki : 30
+p_eaa_y_kd : 31
+
+p_eaa_z_kp : 32
+p_eaa_z_ki : 33
+p_eaa_z_kd : 34
+
+

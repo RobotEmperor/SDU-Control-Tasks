@@ -1,0 +1,9 @@
+<!-- Placement of the joints are based on: https://www.universal-robots.com/how-tos-and-faqs/faq/ur-faq/parameters-for-calculations-of-kinematics-and-dynamics-45257/ -->
+<!-- Parameters are shifted one place to match RobWork -->
+<DHJoint name="Joint0" alpha="0"   a="0"        d="0"        offset="0" type="schilling" />
+<DHJoint name="Joint1" alpha="90"  a="0"        d="0.1807"  offset="0" type="schilling" />
+<DHJoint name="Joint2" alpha="0"   a="-0.6127" d="0"        offset="0" type="schilling" />
+<DHJoint name="Joint3" alpha="0"   a="-0.57155"  d="0"        offset="0" type="schilling" />
+<DHJoint name="Joint4" alpha="90"  a="0"        d="0.17415" offset="0" type="schilling" />
+<DHJoint name="Joint5" alpha="-90" a="0"        d="0.11985"  offset="0" type="schilling" />
+<DHJoint name="Joint6" alpha="0"   a="0"        d="0.11655"   offset="0" type="schilling" />

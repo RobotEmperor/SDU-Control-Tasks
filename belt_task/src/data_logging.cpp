@@ -7,9 +7,9 @@
 #include "data_logging.h"
 
 
-DataLogging::DataLogging()
+DataLogging::DataLogging(std::string path)
 {
-
+  path_ = path;
 }
 DataLogging::~DataLogging()
 {
@@ -18,7 +18,7 @@ DataLogging::~DataLogging()
 void DataLogging::initialize()
 {
   out = new std::ofstream;
-  out->open("data_log.csv");
+  out->open(path_+"/"+"data_log.csv");
 
   //initial position
   //data variables define
