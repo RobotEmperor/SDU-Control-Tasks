@@ -1,0 +1,26 @@
+Info,  T0: this is my info call
+Info,  T0: Load /home/yik/sdu_ws/SDU-Control-Tasks/wc/UR10e_2018/Geometry/ToolFlange.obj
+Debug, T0: Assimp 4.1.0 amd64 gcc debug shared singlethreaded
+Info,  T0: Found a matching importer for this file format: Wavefront Object Importer.
+Info,  T0: Import root directory is '/home/yik/sdu_ws/SDU-Control-Tasks/wc/UR10e_2018/Geometry/'
+Info,  T0: Entering post processing pipeline
+Debug, T0: Generate spatially-sorted vertex cache
+Debug, T0: JoinVerticesProcess begin
+Debug, T0: Mesh 0 (Solid1) | Verts in: 210 out: 93 | ~55.7143%
+Debug, T0: Mesh 1 (178,178,178) | Verts in: 4683 out: 1636 | ~65.0651%
+Debug, T0: Mesh 2 (98,98,98) | Verts in: 372 out: 126 | ~66.129%
+Debug, T0: Mesh 3 (26,26,26) | Verts in: 1116 out: 378 | ~66.129%
+Debug, T0: Mesh 4 (98,98,98) | Verts in: 21516 out: 4377 | ~79.657%
+Debug, T0: Mesh 5 (178,178,178) | Verts in: 1407 out: 411 | ~70.7889%
+Debug, T0: Mesh 6 (26,26,26) | Verts in: 744 out: 248 | ~66.6667%
+Debug, T0: Mesh 7 (98,98,98) | Verts in: 180 out: 62 | ~65.5556%
+Debug, T0: Mesh 8 (178,178,178) | Verts in: 114 out: 38 | ~66.6667%
+Debug, T0: Mesh 9 (229,235,237) | Verts in: 39 out: 15 | ~61.5385%
+Debug, T0: Mesh 10 (178,178,178) | Verts in: 2214 out: 734 | ~66.8473%
+Debug, T0: Mesh 11 (229,235,237) | Verts in: 39 out: 15 | ~61.5385%
+Debug, T0: Mesh 12 (178,178,178) | Verts in: 114 out: 38 | ~66.6667%
+Debug, T0: Mesh 13 (229,235,237) | Verts in: 39 out: 15 | ~61.5385%
+Debug, T0: Mesh 14 (178,178,178) | Verts in: 114 out: 38 | ~66.6667%
+Debug, T0: Mesh 15 (229,235,237) | Verts in: 39 out: 15 | ~61.5385%
+Info,  T0: JoinVerticesProcess finished | Verts in: 32940 out: 8239 | ~75.0%
+Info,  T0: Leaving post processing pipeline
