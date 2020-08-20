@@ -119,16 +119,14 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   time_count_ = 0;
   previous_task_command_ = "";
 
-  gazebo_check_ = false;
+  gazebo_check_ = true;
 }
 TaskRobot::~TaskRobot()
 {
 
 }
-void TaskRobot::initialize(std::string wc_file, std::string robot_model, std::string robot_ip, bool gazebo_check)
+void TaskRobot::init_model(std::string wc_file, std::string robot_model)
 {
-  gazebo_check_ = gazebo_check;
-  //model load and setting up robot offset
   wc_ = WorkCellLoader::Factory::load(wc_file);
   device_ = wc_->findDevice<SerialDevice>(robot_model);
 
@@ -140,7 +138,10 @@ void TaskRobot::initialize(std::string wc_file, std::string robot_model, std::st
   state_ = wc_->getDefaultState();
   solver_ = std::make_shared<ClosedFormIKSolverUR>(device_, state_);
   solver_->setCheckJointLimits(true);
-
+}
+void TaskRobot::initialize(std::string robot_ip, bool gazebo_check)
+{
+  gazebo_check_ = gazebo_check;
   if(!gazebo_check_)
   {
     //set up the robot
@@ -364,7 +365,6 @@ bool TaskRobot::hybrid_controller()
   {
     compensated_q_[num] = solutions_[1].toStdVector()[num];
   }
-  //test_q_[5] = solutions[1].toStdVector()[5] + 16*(sin(time_count)/100);
 
   //from covid - robot
   for (unsigned int num = 0; num < 6; num ++)
@@ -406,7 +406,7 @@ bool TaskRobot::hybrid_controller()
   {
     if(!gazebo_check_)
     {
-      control_check_ = rtde_control_->servoJ(compensated_q_,0,0,control_time_,0.04,2000);
+      //control_check_ = rtde_control_->servoJ(compensated_q_,0,0,control_time_,0.03,2000);
     }
     for(int num = 0; num <6 ; num ++)
     {
@@ -449,10 +449,12 @@ void TaskRobot::parse_init_data_(const std::string &path)
 
   tool_mass_= doc["tool_mass"].as<double>(); // YAML 에 string "mov_time"을 읽어온다.
   YAML::Node initial_joint_states = doc["initial_joint_states"];
+  YAML::Node initial_robot_ee_position = doc["initial_robot_ee_position"];
 
   for(int num = 0; num < 6; num++)
   {
     current_q_[num] = initial_joint_states[num].as<double>();
+    compensated_pose_vector_[num] = initial_robot_ee_position[num].as<double>();
   }
 
   force_controller_gain_.x_kp = doc["f_x_kp"].as<double>();
@@ -492,49 +494,6 @@ void TaskRobot::parse_init_data_(const std::string &path)
   position_controller_gain_.eaa_z_kp = doc["p_eaa_z_kp"].as<double>();
   position_controller_gain_.eaa_z_ki = doc["p_eaa_z_ki"].as<double>();
   position_controller_gain_.eaa_z_kd = doc["p_eaa_z_kd"].as<double>();
-
-
-  //test
-  cout << "tool_mass "<< tool_mass_ << endl;
-  cout << "current_q_ "<< current_q_ << endl;
-
-  cout << "force_controller_gain_.x_kp " << force_controller_gain_.x_kp << endl;
-  cout << "force_controller_gain_.x_ki " << force_controller_gain_.x_ki << endl;
-  cout << "force_controller_gain_.x_kd " << force_controller_gain_.x_kd << endl;
-  cout << "force_controller_gain_.y_kp " << force_controller_gain_.y_kp << endl;
-  cout << "force_controller_gain_.y_ki " << force_controller_gain_.y_ki << endl;
-  cout << "force_controller_gain_.y_kd " << force_controller_gain_.y_kd << endl;
-  cout << "force_controller_gain_.z_kp " << force_controller_gain_.z_kp << endl;
-  cout << "force_controller_gain_.z_ki " << force_controller_gain_.z_ki << endl;
-  cout << "force_controller_gain_.z_kd " << force_controller_gain_.z_kd << endl;
-  cout << "force_controller_gain_.eaa_x_kp "<< force_controller_gain_.eaa_x_kp << endl;
-  cout << "force_controller_gain_.eaa_x_ki "<< force_controller_gain_.eaa_x_ki << endl;
-  cout << "force_controller_gain_.eaa_x_kd "<< force_controller_gain_.eaa_x_kd << endl;
-  cout << "force_controller_gain_.eaa_y_kp "<< force_controller_gain_.eaa_y_kp << endl;
-  cout << "force_controller_gain_.eaa_y_ki "<< force_controller_gain_.eaa_y_ki << endl;
-  cout << "force_controller_gain_.eaa_y_kd "<< force_controller_gain_.eaa_y_kd << endl;
-  cout << "force_controller_gain_.eaa_z_kp "<< force_controller_gain_.eaa_z_kp << endl;
-  cout << "force_controller_gain_.eaa_z_ki "<< force_controller_gain_.eaa_z_ki << endl;
-  cout << "force_controller_gain_.eaa_z_kd "<< force_controller_gain_.eaa_z_kd << endl;
-
-  cout << "position_controller_gain_.x_kp "<< position_controller_gain_.x_kp << endl;
-  cout << "position_controller_gain_.x_ki "<< position_controller_gain_.x_ki << endl;
-  cout << "position_controller_gain_.x_kd "<< position_controller_gain_.x_kd << endl;
-  cout << "position_controller_gain_.y_kp "<< position_controller_gain_.y_kp << endl;
-  cout << "position_controller_gain_.y_ki "<< position_controller_gain_.y_ki << endl;
-  cout << "position_controller_gain_.y_kd "<< position_controller_gain_.y_kd << endl;
-  cout << "position_controller_gain_.z_kp "<< position_controller_gain_.z_kp << endl;
-  cout << "position_controller_gain_.z_ki "<< position_controller_gain_.z_ki << endl;
-  cout << "position_controller_gain_.z_kd "<< position_controller_gain_.z_kd << endl;
-  cout << "position_controller_gain_.eaa_x_kp "<< position_controller_gain_.eaa_x_kp << endl;
-  cout << "position_controller_gain_.eaa_x_ki "<< position_controller_gain_.eaa_x_ki << endl;
-  cout << "position_controller_gain_.eaa_x_kd "<< position_controller_gain_.eaa_x_kd << endl;
-  cout << "position_controller_gain_.eaa_y_kp "<< position_controller_gain_.eaa_y_kp << endl;
-  cout << "position_controller_gain_.eaa_y_ki "<< position_controller_gain_.eaa_y_ki << endl;
-  cout << "position_controller_gain_.eaa_y_kd "<< position_controller_gain_.eaa_y_kd << endl;
-  cout << "position_controller_gain_.eaa_z_kp "<< position_controller_gain_.eaa_z_kp << endl;
-  cout << "position_controller_gain_.eaa_z_ki "<< position_controller_gain_.eaa_z_ki << endl;
-  cout << "position_controller_gain_.eaa_z_kd "<< position_controller_gain_.eaa_z_kd << endl;
 }
 void TaskRobot::set_force_controller_x_gain(double kp,double ki,double kd)
 {

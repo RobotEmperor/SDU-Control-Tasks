@@ -39,6 +39,7 @@ public:
   void PidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void ForcePidGainCommandMsgCallBack (const std_msgs::Float64MultiArray::ConstPtr& msg);
   void send_gazebo_command (std::vector<double> gazebo_command);
+  void send_gazebo_b_command (std::vector<double> gazebo_command);
   void send_raw_ft_data (std::vector<double> raw_ft_data);
   void send_filtered_ft_data (std::vector<double> filtered_ft_data);
   void send_pid_compensation_data (std::vector<double> pid_compensation_data);
@@ -64,13 +65,7 @@ public:
 
   std::string get_task_command();
 
-  //Robot B
-  void send_gazebo_b_command (std::vector<double> gazebo_command);
-
 private:
-
-  //robot A
-
   double gain_p_, gain_i_, gain_d_;
   double force_gain_p_, force_gain_i_, force_gain_d_;
   std::string task_command_;
@@ -86,6 +81,13 @@ private:
   ros::Publisher gazebo_wrist_1_position_pub_;
   ros::Publisher gazebo_wrist_2_position_pub_;
   ros::Publisher gazebo_wrist_3_position_pub_;
+
+  ros::Publisher gazebo_shoulder_pan_position_b_pub_;
+  ros::Publisher gazebo_shoulder_lift_position_b_pub_;
+  ros::Publisher gazebo_elbow_position_b_pub_;
+  ros::Publisher gazebo_wrist_1_position_b_pub_;
+  ros::Publisher gazebo_wrist_2_position_b_pub_;
+  ros::Publisher gazebo_wrist_3_position_b_pub_;
 
   ros::Subscriber ee_command_sub_;
   ros::Subscriber task_command_sub_;
@@ -105,6 +107,13 @@ private:
   std_msgs::Float64 gazebo_wrist_2_position_msg_;
   std_msgs::Float64 gazebo_wrist_3_position_msg_;
 
+  std_msgs::Float64 gazebo_shoulder_pan_position_b_msg_;
+  std_msgs::Float64 gazebo_shoulder_lift_position_b_msg_;
+  std_msgs::Float64 gazebo_elbow_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_1_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_2_position_b_msg_;
+  std_msgs::Float64 gazebo_wrist_3_position_b_msg_;
+
   //messages for RL
   ros::Publisher error_ee_pose_pub_;
   ros::Publisher ee_velocity_pub_;
@@ -114,23 +123,6 @@ private:
   std_msgs::Float64MultiArray ee_velocity_msg_;
   std_msgs::Bool satefy_violation_msg_;
 
-  //robot B
-
-  ros::Publisher gazebo_shoulder_pan_position_b_pub_;
-  ros::Publisher gazebo_shoulder_lift_position_b_pub_;
-  ros::Publisher gazebo_elbow_position_b_pub_;
-  ros::Publisher gazebo_wrist_1_position_b_pub_;
-  ros::Publisher gazebo_wrist_2_position_b_pub_;
-  ros::Publisher gazebo_wrist_3_position_b_pub_;
-
-  std_msgs::Float64 gazebo_shoulder_pan_position_b_msg_;
-  std_msgs::Float64 gazebo_shoulder_lift_position_b_msg_;
-  std_msgs::Float64 gazebo_elbow_position_b_msg_;
-  std_msgs::Float64 gazebo_wrist_1_position_b_msg_;
-  std_msgs::Float64 gazebo_wrist_2_position_b_msg_;
-  std_msgs::Float64 gazebo_wrist_3_position_b_msg_;
-
-  //test
   bool test_;
 };
 

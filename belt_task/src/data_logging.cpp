@@ -53,7 +53,7 @@ void DataLogging::initialize()
 void DataLogging::save_file()
 {
   out->close();
-  std::cout << "complete and save" << "\n\n";
+  std::cout << "complete and save" << std::endl;
 }
 //data recording
 void DataLogging::set_time_count(double sampling_time)

@@ -24,15 +24,13 @@
 #include <sys/types.h>
 #include <alchemy/task.h>
 #include <alchemy/timer.h>
-#include <pthread.h>
 
 //real time task
 RT_TASK loop_robot_a;
 RT_TASK loop_robot_b;
 
 //cpu set to avoid overlaod
-cpu_set_t cpu_robot_a;
-cpu_set_t cpu_robot_b;
+cpu_set_t cpu_robot;
 
 void initialize();
 

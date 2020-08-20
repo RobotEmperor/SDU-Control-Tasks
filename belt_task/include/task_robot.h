@@ -7,7 +7,7 @@
 
 #ifndef SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_TASK_ROBOT_H_
 #define SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_TASK_ROBOT_H_
-//#define WC_FILE "/home/yik/sdu_ws/SDU-Control-Tasks/wc/UR10e_2018/UR10e.xml"
+//#define WC_FILE "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/wc/UR10e_2018/UR10e.xml"
 
 #include <Eigen/Dense>
 #include "log.h"
@@ -52,7 +52,8 @@ public:
   ~TaskRobot();
 
   void parse_init_data_(const std::string &path);
-  void initialize(std::string wc_file, std::string robot_model, std::string robot_ip, bool gazebo_check);
+  void initialize(std::string robot_ip, bool gazebo_check);
+  void init_model(std::string wc_file, std::string robot_model);
   void move_to_init_pose();
 
   bool tasks(std::string command);
