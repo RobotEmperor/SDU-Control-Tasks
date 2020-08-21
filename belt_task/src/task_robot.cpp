@@ -73,7 +73,6 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   position_controller_gain_.eaa_z_kd = 0;
 
   robot_name_ = robot_name;
-  parse_init_data_(init_path + "/" + robot_name_ + "/initialize_robot.yaml");
 
   //data log
   data_log_ = std::make_shared<DataLogging>(init_path + "/" + robot_name_);
@@ -97,7 +96,6 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   robot_task_->initialize(control_time_, init_path + "/" + robot_name_ + "/initialize_robot.yaml");
 
   //load motion data
-  robot_task_->load_task_motion(init_path + "/" + robot_name_ + "/motion/initialize_belt_task.yaml", "initialize_belt_task");
   robot_task_->load_task_motion(init_path + "/" + robot_name_ + "/motion/initialize.yaml", "initialize");
   robot_task_->trans_tcp_to_base_motion(init_path + "/" + robot_name_ + "/motion/tcp_belt_task.yaml");
 
@@ -116,6 +114,7 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   joint_vel_limits_ = false;
   contact_check_ = false;
 
+  preferred_solution_number_ = 0;
   time_count_ = 0;
   previous_task_command_ = "";
 
@@ -361,9 +360,13 @@ bool TaskRobot::hybrid_controller()
   //solve ik problem
   solutions_ = solver_->solve(tf_desired_, state_);
 
+  //  for(std::size_t i = 0; i < solutions_.size(); i++) {
+  //      std::cout << i << " : " << solutions_[i] << std::endl;
+  //  }
+
   for(int num = 0; num <6 ; num ++)
   {
-    compensated_q_[num] = solutions_[1].toStdVector()[num];
+    compensated_q_[num] = solutions_[preferred_solution_number_].toStdVector()[num];
   }
 
   //from covid - robot
@@ -396,7 +399,7 @@ bool TaskRobot::hybrid_controller()
     {
       std::cout << "::" << num << "::" << fabs((compensated_q_[num] - current_q_[num])/control_time_) << std::endl;
       std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
-      joint_vel_limits_ = true;
+      //joint_vel_limits_ = true;
       control_check_ = false;
     }
   }
@@ -435,26 +438,33 @@ bool TaskRobot::hybrid_controller()
 }
 void TaskRobot::parse_init_data_(const std::string &path)
 {
-  YAML::Node doc; // YAML file class 선언!
+  YAML::Node doc; //
   try
   {
     // load yaml
-    doc = YAML::LoadFile(path.c_str()); // 파일 경로를 입력하여 파일을 로드 한다.
+    doc = YAML::LoadFile(path.c_str()); //
 
-  }catch(const std::exception& e) // 에러 점검
+  }catch(const std::exception& e) //
   {
     cout << "Fail to load yaml file!" << endl;
     return;
   }
 
-  tool_mass_= doc["tool_mass"].as<double>(); // YAML 에 string "mov_time"을 읽어온다.
+  tool_mass_= doc["tool_mass"].as<double>(); //
+  preferred_solution_number_ =  doc["preferred_solution_number"].as<double>();
   YAML::Node initial_joint_states = doc["initial_joint_states"];
-  YAML::Node initial_robot_ee_position = doc["initial_robot_ee_position"];
+
+  compensated_pose_vector_ = robot_task_->get_initial_ee_position();
+
+  tf_desired_ = Transform3D<> (Vector3D<>(compensated_pose_vector_[0], compensated_pose_vector_[1], compensated_pose_vector_[2]),
+      EAA<>(compensated_pose_vector_[3], compensated_pose_vector_[4], compensated_pose_vector_[5]).toRotation3D());
+
+  //solve ik problem
+  solutions_ = solver_->solve(tf_desired_, state_);
 
   for(int num = 0; num < 6; num++)
   {
-    current_q_[num] = initial_joint_states[num].as<double>();
-    compensated_pose_vector_[num] = initial_robot_ee_position[num].as<double>();
+    current_q_[num] = solutions_[preferred_solution_number_].toStdVector()[num];
   }
 
   force_controller_gain_.x_kp = doc["f_x_kp"].as<double>();

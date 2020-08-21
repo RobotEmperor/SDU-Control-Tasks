@@ -9,9 +9,6 @@
 
 void loop_robot_a_proc(void *arg)
 {
-  robot_a->initialize(robot_a_ip, gazebo_check);
-  robot_a->move_to_init_pose();
-
   RT_TASK *curtask;
   RT_TASK_INFO curtaskinfo;
 
@@ -51,7 +48,6 @@ void loop_robot_a_proc(void *arg)
     ros_state->send_error_ee_pose(robot_a->get_error_ee_pose_());
     ros_state->send_ee_velocity(robot_a->get_actual_tcp_speed_());
 
-
     task_time_A = (rt_timer_read() - tstart_A)/1000000.0;
     if(task_time_A >= 2.0)
       cout << COLOR_GREEN_BOLD << "Check task's completion A : " << task_completed << " Elapsed time : "<< task_time_A << COLOR_RESET << endl;
@@ -60,9 +56,6 @@ void loop_robot_a_proc(void *arg)
 }
 void loop_robot_b_proc(void *arg)
 {
-  robot_b->initialize(robot_b_ip, gazebo_check);
-  robot_b->move_to_init_pose();
-
   RT_TASK *curtask;
   RT_TASK_INFO curtaskinfo;
 
@@ -97,10 +90,10 @@ void loop_robot_b_proc(void *arg)
       ros_state->send_gazebo_b_command(robot_b->get_current_q_());
     }
 
-    //ros_state->send_raw_ft_data(robot_b->get_raw_ft_data_());
-    //ros_state->send_filtered_ft_data(robot_b->get_contacted_ft_data_());
-    //ros_state->send_error_ee_pose(robot_b->get_error_ee_pose_());
-    //os_state->send_ee_velocity(robot_b->get_actual_tcp_speed_());
+    ros_state->send_raw_ft_data(robot_b->get_raw_ft_data_());
+    ros_state->send_filtered_ft_data(robot_b->get_contacted_ft_data_());
+    ros_state->send_error_ee_pose(robot_b->get_error_ee_pose_());
+    ros_state->send_ee_velocity(robot_b->get_actual_tcp_speed_());
 
     task_time_B = (rt_timer_read() - tstart_B)/1000000.0;
     if(task_time_B >= 2.0)
@@ -118,13 +111,15 @@ void initialize()
 
   robot_path = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config";
   robot_a = std::make_shared<TaskRobot>("robot_A",robot_path);
-  robot_path = robot_path + "/wc/UR10e_2018/UR10e.xml";
+  robot_path = robot_path + "/wc/UR10e_2018/UR10e_a.xml";
   robot_a ->init_model(robot_path, "UR10e");
+  robot_a ->parse_init_data_("/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/robot_A/initialize_robot.yaml");
 
   robot_path = "/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config";
   robot_b = std::make_shared<TaskRobot>("robot_B",robot_path);
-  robot_path = robot_path + "/wc/UR10e_2018/UR10e.xml";
+  robot_path = robot_path + "/wc/UR10e_2018/UR10e_b.xml";
   robot_b ->init_model(robot_path, "UR10e");
+  robot_b ->parse_init_data_("/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/config/robot_B/initialize_robot.yaml");
 }
 void my_function(int sig)
 { // can be called asynchronously
@@ -132,6 +127,7 @@ void my_function(int sig)
 }
 int main (int argc, char **argv)
 {
+  CPU_ZERO(&cpu_robot);
 
   mlockall(MCL_CURRENT | MCL_FUTURE); //Lock the memory to avoid memory swapping for this program
 
@@ -170,7 +166,15 @@ int main (int argc, char **argv)
   if(gazebo_check)
   {
     ros_state->send_gazebo_command(robot_a->get_current_q_());
-    //ros_state->send_gazebo_b_command(current_q);
+    ros_state->send_gazebo_b_command(robot_b->get_current_q_());
+  }
+  else
+  {
+    robot_a->initialize(robot_a_ip, gazebo_check);
+    robot_a->move_to_init_pose();
+
+    robot_b->initialize(robot_b_ip, gazebo_check);
+    robot_b->move_to_init_pose();
   }
 
   //real time task

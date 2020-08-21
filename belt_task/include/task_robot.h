@@ -194,6 +194,7 @@ private:
   bool control_check_;
 
   //solution check
+  int preferred_solution_number_;
   bool joint_vel_limits_;
   std::vector<rw::math::Q> solutions_;
 

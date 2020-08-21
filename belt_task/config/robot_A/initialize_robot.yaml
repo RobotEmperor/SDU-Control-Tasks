@@ -1,8 +1,7 @@
+preferred_solution_number: 1
 tool_mass: 1.75
-initial_joint_states: [2.6559, -1.85396, -2.03763, -2.38718, -2.84058, -3.13698]
-initial_robot_ee_position: [-0.6649675947900577, 0.2054059150102794, 0.25997552421325143, -0.7298511759689527, -1.7577922996928013, 1.760382318187891]
-bigger_pulley_bearing_position: [-0.739757210413974, 0.07993900394775277, 0.2449995438351456, -0.7217029684216122, -1.7591780460014375, 1.7685571865188172]
-task_initial_position: [-0.13, 0, -0.025, 0,0,0] # in relative to bigger pulley bearing's frame.
+bigger_pulley_bearing_position: [-0.7426107867173253, 0.07556262424326254, 0.24807863624693793, -0.7313354979535918, -1.7622417854008892, 1.7568650899341813]
+task_initial_position: [-0.17, 0, -0.04, 0,0,0] # in relative to bigger pulley bearing's frame.
 
 #force controller gain
 f_x_kp : 0.0003

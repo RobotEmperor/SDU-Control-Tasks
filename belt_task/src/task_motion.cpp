@@ -60,14 +60,8 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   }
 
   // motion data load initialize//
-  YAML::Node initial_robot_ee_position_node = doc["initial_robot_ee_position"];
   YAML::Node bigger_pulley_bearing_position_node = doc["bigger_pulley_bearing_position"];
   YAML::Node task_initial_position_node = doc["task_initial_position"];
-
-
-  for(int num = 0; num < 6; num ++)
-    initial_robot_ee_position.push_back(initial_robot_ee_position_node[num].as<double>());
-
 
   for(int num = 0; num < 6; num ++)
   {
@@ -78,17 +72,22 @@ void TaskMotion::initialize(double control_time_, std::string load_path_)
   for(int num = 0; num < 6; num ++)
     task_initial_position.push_back(task_initial_position_node[num].as<double>());
 
-  set_initial_pose(initial_robot_ee_position[0], initial_robot_ee_position[1], initial_robot_ee_position[2], initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]); // set to be robot initial values
-
   tf_base_to_bearing = Transform3D<> (Vector3D<>(bigger_pulley_bearing_position[0], bigger_pulley_bearing_position[1], bigger_pulley_bearing_position[2]), EAA<>(bigger_pulley_bearing_position[3], bigger_pulley_bearing_position[4], bigger_pulley_bearing_position[5]).toRotation3D());
-  tf_bearing_to_bearing2 = Transform3D<> (Vector3D<>(-0.13,0,0), EAA<>(0,0,0).toRotation3D());
+  //tf_bearing_to_bearing2 = Transform3D<> (Vector3D<>(-0.13,0,0), EAA<>(0,0,0).toRotation3D());
   tf_bearing_to_init = Transform3D<> (Vector3D<>(task_initial_position[0], task_initial_position[1], task_initial_position[2]), EAA<>(task_initial_position[3], task_initial_position[4], task_initial_position[5]).toRotation3D());
 
+  //tf_base_to_bearing2 = tf_base_to_bearing*tf_bearing_to_bearing2;
   tf_base_to_init_task = tf_base_to_bearing*tf_bearing_to_init;
-  tf_base_to_bearing2 = tf_base_to_bearing*tf_bearing_to_bearing2;
 
-  std::cout << tf_base_to_init_task << std::endl;
-  std::cout << tf_base_to_bearing2 << std::endl;
+  for(int num = 0; num < 3; num ++)
+    initial_robot_ee_position.push_back(tf_base_to_init_task.P()[num]);
+  for(int num = 0; num < 3; num ++)
+    initial_robot_ee_position.push_back(EAA<>(tf_base_to_init_task.R())[num]);
+
+  set_initial_pose(initial_robot_ee_position[0], initial_robot_ee_position[1], initial_robot_ee_position[2], initial_robot_ee_position[3], initial_robot_ee_position[4], initial_robot_ee_position[5]); // set to be robot initial values
+
+  std::cout << "tf_base_to_init_task : " << tf_base_to_init_task << std::endl;
+  std::cout << "initial_robot_ee_position : "<<initial_robot_ee_position << std::endl;
 }
 void TaskMotion::robot_initialize() // joint space
 {
@@ -109,7 +108,7 @@ void TaskMotion::load_task_motion(std::string path_, std::string motion_)
 
   // motion data load initialize//
   YAML::Node motion_start_time_node = doc["motion_start_time"];
-  YAML::Node motion_task_node = doc["motion_task"];
+  //YAML::Node motion_task_node = doc["motion_task"];
 
   std::vector<double> temp_motion_start_time_vector;
   std::vector<double> temp_motion_task_pose_vector;
@@ -118,66 +117,49 @@ void TaskMotion::load_task_motion(std::string path_, std::string motion_)
   int point_numbers;
   point_numbers = 0;
 
-  //time
   for (YAML::iterator it = motion_start_time_node.begin(); it != motion_start_time_node.end(); ++it)
   {
     point_numbers = it->first.as<int>();
     temp_motion_start_time_vector.push_back(it->second[0].as<double>());
     motion_start_time_vector[point_numbers] = temp_motion_start_time_vector;
     temp_motion_start_time_vector.clear();
-  }
-  //points
-  for (YAML::iterator it = motion_task_node.begin(); it != motion_task_node.end(); ++it)
-  {
-    point_numbers = it->first.as<int>();
+
     for(int num = 0; num < 3; num++)
     {
-      temp_motion_task_pose_vector.push_back(it->second[num].as<double>());
+      temp_motion_task_pose_vector.push_back(initial_robot_ee_position[num]);
+      temp_motion_task_vel_vector.push_back(0);
     }
     for(int num = 3; num < 6; num++)
     {
-      temp_motion_task_pose_vector.push_back(it->second[num].as<double>());
+
+      temp_motion_task_pose_vector.push_back(initial_robot_ee_position[num]);
+      temp_motion_task_vel_vector.push_back(0);
+
     }
     motion_task_pose_vector[point_numbers] = temp_motion_task_pose_vector;
-    temp_motion_task_pose_vector.clear();
-
     all_point ++;
   }
-  //velocity
-  for(int num = 0; num < 6; num++)
-    temp_motion_task_vel_vector.push_back(0);
 
   for(int num = 0; num < all_point+1 ; num++)
   {
     motion_task_init_vel_vector[num] = temp_motion_task_vel_vector;
     motion_task_final_vel_vector[num] = temp_motion_task_vel_vector;
   }
+
+  temp_motion_start_time_vector.clear();
+  temp_motion_task_pose_vector.clear();
   temp_motion_task_vel_vector.clear();
 
-  if(!motion_.compare("initialize_belt_task"))
-  {
-    init_belt_task_all_point = all_point;
-    init_belt_motion_start_time_vector = motion_start_time_vector;
-    init_belt_motion_task_pose_vector = motion_task_pose_vector;
-    init_belt_motion_task_init_vel_vector = motion_task_init_vel_vector;
-    init_belt_motion_task_final_vel_vector = motion_task_final_vel_vector;
-    all_point = -1;
-  }
-  else
-  {
-    init_all_point = all_point;
-    init_motion_start_time_vector = motion_start_time_vector;
-    init_motion_task_pose_vector = motion_task_pose_vector;
-    init_motion_task_init_vel_vector = motion_task_init_vel_vector;
-    init_motion_task_final_vel_vector = motion_task_final_vel_vector;
-    all_point = -1;
-  }
+  init_all_point = all_point;
+  init_motion_start_time_vector = motion_start_time_vector;
+  init_motion_task_pose_vector = motion_task_pose_vector;
+  init_motion_task_init_vel_vector = motion_task_init_vel_vector;
+  init_motion_task_final_vel_vector = motion_task_final_vel_vector;
+  all_point = -1;
 
   base_frame_ = true;
-  std::cout << "LOAD Cmplete" << std::endl;
+  std::cout << "LOAD initial pose Complete" << std::endl;
 }
-
-
 void TaskMotion::trans_tcp_to_base_motion(std::string load_path_)
 {
   YAML::Node doc; //
@@ -240,7 +222,7 @@ void TaskMotion::trans_tcp_to_base_motion(std::string load_path_)
     tcp_motion_desired_force_vector[point_numbers] = temp_force_node_vector;
     temp_force_node_vector.clear();
   }
-  std::cout << "TCP task motion LOAD and Transformation (TCP --> base) Cmplete" << std::endl;
+  std::cout << "TCP task motion LOAD and Transformation (TCP --> base) Complete" << std::endl;
 }
 void TaskMotion::change_motion(std::string motion_)
 {
@@ -261,14 +243,14 @@ void TaskMotion::change_motion(std::string motion_)
   {
     base_frame_ = true;
 
-    all_point = init_belt_task_all_point;
+    all_point = init_all_point;
 
-    motion_start_time_vector = init_belt_motion_start_time_vector;
-    motion_task_pose_vector  = init_belt_motion_task_pose_vector;
-    motion_task_init_vel_vector = init_belt_motion_task_init_vel_vector;
-    motion_task_final_vel_vector = init_belt_motion_task_final_vel_vector;
+    motion_start_time_vector = init_motion_start_time_vector;
+    motion_task_pose_vector  = init_motion_task_pose_vector;
+    motion_task_init_vel_vector = init_motion_task_init_vel_vector;
+    motion_task_final_vel_vector = init_motion_task_final_vel_vector;
 
-    std::cout << "receive initialize_belt_task command" << std::endl;
+    std::cout << "receive initialize command" << std::endl;
   }
   else if(!motion_.compare("tcp_belt_task"))
   {
@@ -766,6 +748,10 @@ std::vector<double> TaskMotion::get_set_point_base()
 std::vector<double> TaskMotion::get_desired_force_torque()
 {
   return current_force_torque_vector;
+}
+std::vector<double> TaskMotion::get_initial_ee_position()
+{
+  return initial_robot_ee_position;
 }
 unsigned int TaskMotion::get_phases_()
 {

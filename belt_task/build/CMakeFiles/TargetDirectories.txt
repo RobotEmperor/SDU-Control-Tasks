@@ -1,3 +1,0 @@
-/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/build/CMakeFiles/rebuild_cache.dir
-/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/build/CMakeFiles/belt_task.dir
-/home/yik/sdu_ws/SDU-Control-Tasks/belt_task/build/CMakeFiles/edit_cache.dir

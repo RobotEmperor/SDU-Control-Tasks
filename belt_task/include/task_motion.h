@@ -71,6 +71,7 @@ public:
   std::vector<double> get_set_point_base();
   std::vector<double> get_current_pose();
   std::vector<double> get_desired_force_torque();
+  std::vector<double> get_initial_ee_position();
   unsigned int get_phases_();
 
 private:
