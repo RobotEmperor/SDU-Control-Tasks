@@ -30,11 +30,14 @@ void loop_robot_a_proc(void *arg)
 	bool task_completed = false;
 	double task_time_A = 0.0;
 
+	robot_a->set_robust_value(0.17);
+
 	while(!exit_program)
 	{
 		ros_state->update_ros_data();
 		tstart_A = rt_timer_read();
 
+		m.lock();
 		robot_a->tasks(ros_state->get_task_command());
 		robot_a->hybrid_controller();
 
@@ -48,9 +51,10 @@ void loop_robot_a_proc(void *arg)
 		ros_state->send_error_ee_pose(robot_a->get_error_ee_pose_());
 		ros_state->send_ee_velocity(robot_a->get_actual_tcp_speed_());
 
-		//task_time_A = (rt_timer_read() - tstart_A)/1000000.0;
-		//if(task_time_A >= 2.0)
-		//cout << COLOR_GREEN_BOLD << "Check task's completion A : " << task_completed << " Elapsed time : "<< task_time_A << COLOR_RESET << endl;
+		task_time_A = (rt_timer_read() - tstart_A)/1000000.0;
+		if(task_time_A >= 2.0)
+		  cout << COLOR_GREEN_BOLD << "Check task's completion A : " << task_completed << " Elapsed time : "<< task_time_A << COLOR_RESET << endl;
+		m.unlock();
 		rt_task_wait_period(NULL);
 	}
 }
@@ -77,8 +81,11 @@ void loop_robot_b_proc(void *arg)
   bool task_completed = false;
   double task_time_B = 0.0;
 
+  robot_b->set_robust_value(0.05);
+
   while(!exit_program)
   {
+    m.lock();
     ros_state->update_ros_data();
     tstart_B = rt_timer_read();
 
@@ -95,9 +102,10 @@ void loop_robot_b_proc(void *arg)
     ros_state->send_error_ee_pose(robot_b->get_error_ee_pose_());
     ros_state->send_ee_velocity(robot_b->get_actual_tcp_speed_());
 
-    //task_time_B = (rt_timer_read() - tstart_B)/1000000.0;
-    //if(task_time_B >= 2.0)
-    //cout << COLOR_GREEN_BOLD << "Check task's completion B : " << task_completed << "  Elapsed time : "<< task_time_B << COLOR_RESET << endl;
+    task_time_B = (rt_timer_read() - tstart_B)/1000000.0;
+    if(task_time_B >= 2.0)
+      cout << COLOR_GREEN_BOLD << "Check task's completion B : " << task_completed << "  Elapsed time : "<< task_time_B << COLOR_RESET << endl;
+    m.unlock();
     rt_task_wait_period(NULL);
   }
 }
@@ -182,11 +190,11 @@ int main (int argc, char **argv)
 	//real time task
 	char str[35];
 	sprintf(str, "Belt Task A Start");
-	rt_task_create(&loop_robot_a, str, 0, 18, 0);//Create the real time task
+	rt_task_create(&loop_robot_a, str, 0, 50, 0);//Create the real time task
 	rt_task_start(&loop_robot_a, &loop_robot_a_proc,0);//Since task starts in suspended mode, start task
 
 	sprintf(str, "Belt Task B Start");
-	rt_task_create(&loop_robot_b, str, 0, 17, 0);//Create the real time task
+	rt_task_create(&loop_robot_b, str, 0, 51, 0);//Create the real time task
 	rt_task_start(&loop_robot_b, &loop_robot_b_proc, 0);//Since task starts in suspended mode, start task
 	std::cout << COLOR_GREEN << "Real time task loop was created!" << COLOR_RESET << std::endl;
 

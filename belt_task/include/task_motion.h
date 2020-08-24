@@ -40,8 +40,12 @@ public:
   void trans_tcp_to_base_motion(std::string load_path_);
   void load_task_motion(std::string path_, std::string motion_);
 
-  void auto_task_motion(bool contact_);
+  bool insert_belt_into_pulley(bool contact_, double change_x, double change_y, double change_z);
 
+  bool close_to_pulleys(double depth);
+  bool make_belt_robust(double radious);
+
+  void check_phases();
   void run_task_motion();
   void generate_trajectory();
 
@@ -93,6 +97,7 @@ private:
   double change_path_y_;
   double change_path_z_;
   unsigned int phases_;
+  unsigned int pre_phases_;
   double radious_;
 
   //initial condition
@@ -142,7 +147,7 @@ private:
   Transform3D<> tf_bearing_to_init;
   Transform3D<> tf_bearing_to_bearing2;
   Transform3D<> tf_base_to_init_task;
-  Transform3D<> tf_base_to_contact_point_;
+  Transform3D<> tf_static_frame_;
   Transform3D<> tf_contact_point_to_non_contact_point_;
 
 

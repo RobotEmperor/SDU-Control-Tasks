@@ -15,6 +15,7 @@ TaskMotion::TaskMotion()
   change_path_y_ = 0.001;
   change_path_z_ = 0.001;
   phases_= 0;
+  pre_phases_ = 0;
 
 }
 TaskMotion::~TaskMotion()
@@ -239,19 +240,6 @@ void TaskMotion::change_motion(std::string motion_)
 
     std::cout << "receive initialize command" << std::endl;
   }
-  else if(!motion_.compare("initialize_belt_task"))
-  {
-    base_frame_ = true;
-
-    all_point = init_all_point;
-
-    motion_start_time_vector = init_motion_start_time_vector;
-    motion_task_pose_vector  = init_motion_task_pose_vector;
-    motion_task_init_vel_vector = init_motion_task_init_vel_vector;
-    motion_task_final_vel_vector = init_motion_task_final_vel_vector;
-
-    std::cout << "receive initialize command" << std::endl;
-  }
   else if(!motion_.compare("tcp_belt_task"))
   {
     all_point = tcp_all_point;
@@ -299,29 +287,17 @@ void TaskMotion::change_motion(std::string motion_)
   else
     std::cout << "invalid command" << std::endl;
 }
-void TaskMotion::auto_task_motion(bool contact_)
+bool TaskMotion::make_belt_robust(double radious)
 {
-  // output always has to be points in relative to base frame (global)
-
   static RPY<> tcp_rpy_;
   static RPY<> pulley_frame_rpy_;
   static Vector3D<> pulley_frame_xyz_;
-  //static Transform3D<> tf_base_to_init_task_temp;
-  //tf_base_to_init_task_temp = Transform3D<> (Vector3D<>(0, 0, 0), tcp_rpy_.toRotation3D());
 
-  //std::cout << "contact_ :: " << contact_ << std::endl;
-
-  // during tasks
-  //phase 0 move to pulley as closely as possible  / global
   if(phases_ == 0)
   {
     tcp_rpy_ = RPY<>(0,0,0);
 
-    //tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.04, 0, 0.015), tcp_rpy_.toRotation3D());
-
-   // tf_base_to_init_task_temp = tf_base_to_init_task * tf_tcp_desired_pose_;
-
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(-0.025, 0.016, 0.013), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(radious, 0, 0), tcp_rpy_.toRotation3D());
 
     tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
 
@@ -335,21 +311,27 @@ void TaskMotion::auto_task_motion(bool contact_)
 
     for(int num = 0; num <6; num ++)
     {
-      desired_pose_matrix(num,7) = 5;
+      desired_pose_matrix(num,7) = 2.5;
     }
-
-    robot_traj->cal_end_point_to_rad(desired_pose_matrix);
-
-    if(robot_traj->is_moving_check == false)
-      phases_ ++;
   }
-  else if(phases_ == 1)
+}
+bool TaskMotion::close_to_pulleys(double depth)
+{
+  static RPY<> tcp_rpy_;
+  static RPY<> pulley_frame_rpy_;
+  static Vector3D<> pulley_frame_xyz_;
+
+  if(pre_phases_ != phases_)
+    tf_static_frame_ = tf_current_pose_;
+
+  // output always has to be points in relative to base frame (global)
+  if(phases_ == 1)
   {
     tcp_rpy_ = RPY<>(0,0,0);
 
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(-0.025 - change_path_x_, 0.016+change_path_y_, 0.013 + change_path_z_), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, depth), tcp_rpy_.toRotation3D());
 
-    tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
+    tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
 
     desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
     desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
@@ -361,127 +343,23 @@ void TaskMotion::auto_task_motion(bool contact_)
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 1.5;
-    }
-
-    robot_traj->cal_end_point_to_rad(desired_pose_matrix);
-
-    if(robot_traj->is_moving_check == false)
-    {
-      std::cout << "change to phase 2" << std::endl;
-      std::cout << "X" << change_path_x_ << std::endl;
-      std::cout << "Y" << change_path_y_ << std::endl;
-      std::cout << "Z" << change_path_z_ << std::endl;
-      change_path_x_ += 0.0005;
-      change_path_y_ += 0.001;
-      change_path_z_ += 0.004;
-      phases_ ++;
+      desired_pose_matrix(num,7) = 2.5;
     }
   }
-  else if(phases_ == 2)
+}
+bool TaskMotion::insert_belt_into_pulley(bool contact_, double change_x, double change_y, double change_z)
+{
+
+}
+void TaskMotion::check_phases()
+{
+  if(robot_traj->is_moving_check == false)
   {
-    if(change_path_y_ > 0.009)
-      change_path_y_ = 0.009;
-    if(change_path_z_ > 0.04)
-      change_path_z_ = 0.04;
-    if(change_path_x_ > 0.02)
-      change_path_x_ = 0.02;
-
-    path_y_ = -0.02;
-
-    tcp_rpy_ = RPY<>(0,0,0);
-
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(-0.025 - change_path_x_, path_y_, 0.013 + change_path_z_), tcp_rpy_.toRotation3D());
-
-    tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
-    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
-    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
-    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
-
-    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
-    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
-    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
-
-    for(int num = 0; num <6 ; num ++)
-    {
-      desired_pose_matrix(num,7) = 1;
-    }
-
-    robot_traj->cal_end_point_to_rad(desired_pose_matrix);
-
-    if(contact_ && robot_traj->is_moving_check == false)
-      phases_++;
-    if(!contact_ && robot_traj->is_moving_check == false)
-    {
-      std::cout << "change to phase 1" << std::endl;
-      phases_--;
-    }
-  }
-  else if(phases_ == 3)
-  {
-    path_y_ = -0.03;
-    tcp_rpy_ = RPY<>(0,0,0);
-
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.06, path_y_, 0.013 + change_path_z_), tcp_rpy_.toRotation3D());
-
-    tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
-    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
-    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
-    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
-
-    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
-    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
-    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
-
-    for(int num = 0; num <6 ; num ++)
-    {
-      desired_pose_matrix(num,7) = 1;
-    }
-
-    robot_traj->cal_end_point_to_rad(desired_pose_matrix);
-
-    if(robot_traj->is_moving_check == false)
-    {
-      phases_++;
-    }
-  }
-  else if(phases_ == 4)
-  {
-    path_y_ = 0;
-    tcp_rpy_ = RPY<>(0,0,0);
-
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.03, 0, 0.005), tcp_rpy_.toRotation3D());
-
-    tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
-    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
-    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
-    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
-
-    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
-    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
-    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
-
-    for(int num = 0; num <6 ; num ++)
-    {
-      desired_pose_matrix(num,7) = 1.5;
-    }
-
-    robot_traj->cal_end_point_to_rad(desired_pose_matrix);
-
-    if(robot_traj->is_moving_check == false)
-    {
-      std::cout << "change to phase the final phase" << std::endl;
-      phases_++;
-    }
+    phases_ ++;
   }
   else
   {
-    //std::cout << "End of the motion" << std::endl;
-  }
-
-  for(int num = 0; num <6 ; num ++)
-  {
-    current_pose_vector[num] = robot_traj->get_traj_results()(num,0);
+    pre_phases_ = phases_;
   }
 }
 void TaskMotion::run_task_motion()

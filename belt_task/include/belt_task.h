@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <alchemy/task.h>
 #include <alchemy/timer.h>
+#include <mutex>
 
 //real time task
 RT_TASK loop_robot_a;
@@ -48,5 +49,7 @@ std::shared_ptr<RosNode> ros_state;
 double control_time;
 bool gazebo_check;
 bool exit_program;
+
+std::mutex m;
 
 #endif /* SDU_CONTROL_TASKS_BELT_TASK_INCLUDE_BELT_TASK_H_ */
