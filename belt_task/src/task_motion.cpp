@@ -306,6 +306,8 @@ void TaskMotion::auto_task_motion(bool contact_)
   static RPY<> tcp_rpy_;
   static RPY<> pulley_frame_rpy_;
   static Vector3D<> pulley_frame_xyz_;
+  //static Transform3D<> tf_base_to_init_task_temp;
+  //tf_base_to_init_task_temp = Transform3D<> (Vector3D<>(0, 0, 0), tcp_rpy_.toRotation3D());
 
   //std::cout << "contact_ :: " << contact_ << std::endl;
 
@@ -314,6 +316,10 @@ void TaskMotion::auto_task_motion(bool contact_)
   if(phases_ == 0)
   {
     tcp_rpy_ = RPY<>(0,0,0);
+
+    //tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.04, 0, 0.015), tcp_rpy_.toRotation3D());
+
+   // tf_base_to_init_task_temp = tf_base_to_init_task * tf_tcp_desired_pose_;
 
     tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(-0.025, 0.016, 0.013), tcp_rpy_.toRotation3D());
 
@@ -366,9 +372,9 @@ void TaskMotion::auto_task_motion(bool contact_)
       std::cout << "X" << change_path_x_ << std::endl;
       std::cout << "Y" << change_path_y_ << std::endl;
       std::cout << "Z" << change_path_z_ << std::endl;
-      change_path_x_ += 0.001;
+      change_path_x_ += 0.0005;
       change_path_y_ += 0.001;
-      change_path_z_ += 0.001;
+      change_path_z_ += 0.004;
       phases_ ++;
     }
   }
@@ -376,8 +382,8 @@ void TaskMotion::auto_task_motion(bool contact_)
   {
     if(change_path_y_ > 0.009)
       change_path_y_ = 0.009;
-    if(change_path_z_ > 0.02)
-      change_path_z_ = 0.02;
+    if(change_path_z_ > 0.04)
+      change_path_z_ = 0.04;
     if(change_path_x_ > 0.02)
       change_path_x_ = 0.02;
 
@@ -416,7 +422,7 @@ void TaskMotion::auto_task_motion(bool contact_)
     path_y_ = -0.03;
     tcp_rpy_ = RPY<>(0,0,0);
 
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.03, path_y_, 0.013 + change_path_z_), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0.06, path_y_, 0.013 + change_path_z_), tcp_rpy_.toRotation3D());
 
     tf_desired_pose_ = tf_base_to_init_task*tf_tcp_desired_pose_;
     desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];

@@ -6,7 +6,7 @@
 
 	<Frame name="Flange" refframe="Joint5">
 		<RPY>0 0 0</RPY>
-		<Pos>0 0 0.26</Pos>
+		<Pos>0 0 0.37655</Pos>
 	</Frame>
 
 	<PosLimit refjoint="Joint1" min="-360" max="360" />

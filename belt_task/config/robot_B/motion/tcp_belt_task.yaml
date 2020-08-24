@@ -1,23 +1,17 @@
-#seconds
+#seconds BBBBBBBBBBBBBBBBBBBBBBBb
 motion_start_time: 
-  0: [17]
-  1: [7]
-  2: [7]
-  3: [7]
+  0: [8]
+
 
 #TCP frame [M] / degree ZYX angle 
 motion_task: 
-  0: [0, 0, 0.019, 0, 0, 0]  
-  1: [0, -0.0025, 0, 0, 0, 0]
-  2: [-0.005, 0, 0, 0, 0, 0]
-  3: [0, 0.005, 0, 0, 0, 0]
+  0: [-0.13, 0, 0.02, 0, -25, 0]  
+
  
 #TCP frame [N]
 desired_force:
   0: [0,0,0,0,0,0]
-  1: [0,0,0,0,0,0]
-  2: [0,0,0,0,0,0]
-  3: [0,0,0,0,0,0]
+
 
 
 
