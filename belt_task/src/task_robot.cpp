@@ -123,6 +123,12 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   change_x_ = 0;
   change_y_ = 0;
   change_z_ = 0;
+  current_belt_x_= 0;
+  current_belt_y_= 0;
+  current_belt_z_= 0;
+  desired_belt_x_ = 0;
+  desired_belt_y_ = 0;
+  desired_belt_z_ = 0;
 }
 TaskRobot::~TaskRobot()
 {
@@ -196,11 +202,95 @@ void TaskRobot::move_to_init_pose()
   else
   {
     compensated_pose_vector_ = desired_pose_vector_;
+    tf_current_ = Transform3D<> (Vector3D<>(compensated_pose_vector_[0], compensated_pose_vector_[1], compensated_pose_vector_[2]), EAA<>(compensated_pose_vector_[3], compensated_pose_vector_[4], compensated_pose_vector_[5]).toRotation3D());
+    robot_task_->set_current_pose_eaa(compensated_pose_vector_[0], compensated_pose_vector_[1], compensated_pose_vector_[2],compensated_pose_vector_[3], compensated_pose_vector_[4], compensated_pose_vector_[5]);
   }
 }
+void TaskRobot::estimation_of_belt_position()
+{
+  static bool flag = false;
+  double error_x = 0;
+  double error_y = 0;
+  double error_z = 0;
+  double temp_start = 0;
+  double temp_magnitude = 0;
+  double temp_i_1 = 0;
+  Eigen::Matrix<double, 4, 4> tf_bearing_to_static_robot;
+  Eigen::Matrix<double, 4, 4> tf_bearing_to_moveable_robot_start;
+  Eigen::Matrix<double, 4, 4> tf_bearing_to_moveable_robot;
+  Eigen::Matrix<double, 4, 4> distance_tf_static_robot_to_moveable_robot;
+  Eigen::Matrix<double, 4, 4> distance_tf_static_robot_to_moveable_robot_start;
 
+  if(!flag)
+  {
+    //tf_bearing_to_static_robot = tf_base_to_bearing_.e().inverse() * tf_base_to_static_robot_.e();
+
+   // tf_base_to_bearing_.invMult(tf_base_to_bearing_, tf_base_to_static_robot_);
+    tf_bearing_to_moveable_robot_start = tf_base_to_bearing_.e().inverse() *tf_current_.e();
+   cout << "tf_bearing_to_static_robot :"<< tf_bearing_to_moveable_robot_start << endl;
+   //cout <<  "tf_current_.e().inverse() :" <<tf_current_ << endl;
+
+   //cout <<  "tf_base_to_bearing_.e() :" <<tf_base_to_bearing_.e() << endl;
+
+    distance_tf_static_robot_to_moveable_robot_start = tf_bearing_to_static_robot - tf_bearing_to_moveable_robot_start;
+    temp_start = sqrt(pow(2,distance_tf_static_robot_to_moveable_robot_start(3,0) )+ pow(2,distance_tf_static_robot_to_moveable_robot_start(3,2)));
+
+    current_belt_x_ = 0;
+    current_belt_y_ = 0.002;
+    current_belt_z_ = tf_bearing_to_moveable_robot(3,2);
+
+    desired_belt_x_ = 0;
+    desired_belt_y_ = 0.03; // radious
+    desired_belt_z_ = 0;
+
+    flag = true;
+  }
+
+//  tf_bearing_to_static_robot = tf_base_to_static_robot_.e().inverse() * tf_base_to_bearing_.e();
+//  tf_bearing_to_moveable_robot = tf_current_.e().inverse() * tf_base_to_bearing_.e();
+//
+//  distance_tf_static_robot_to_moveable_robot = tf_bearing_to_static_robot - tf_bearing_to_moveable_robot;
+//  //oberve the rubber belt point
+//  // ZX plane
+//
+//  double theta_z = 0;
+//  temp_i_1 = sqrt(pow(2,distance_tf_static_robot_to_moveable_robot(3,0) )+ pow(2,distance_tf_static_robot_to_moveable_robot(3,2)));
+//
+// // temp_magnitude = sqrt(pow(2,tf_bearing_to_static_robot(3,0) - current_belt_x_) + pow(2,tf_bearing_to_static_robot(3,2) - current_belt_z_));
+//
+//  theta_z = acos(temp_start/temp_i_1);
+//
+//  // XY plane
+//  double theta_y = 0;
+//
+//  temp_i_1 = sqrt(pow(2,distance_tf_static_robot_to_moveable_robot(3,0) )+ pow(2,distance_tf_static_robot_to_moveable_robot(3,1)));
+//
+////  temp_magnitude = sqrt(pow(2,tf_bearing_to_static_robot(3,0) - current_belt_x_) + pow(2,tf_bearing_to_static_robot(3,1) - current_belt_y_));
+//
+//  theta_y = acos(temp_start/temp_i_1);
+//
+//  rw::math::Transform3D<> temp_tf_rotation;
+//  rw::math::Vector3D<> current_belt_;
+//  temp_tf_rotation = Transform3D<> (Vector3D<>(0, 0, 0), EAA<>(theta_z, theta_y, 0).toRotation3D());
+//
+//  current_belt_ = temp_tf_rotation.R() * current_belt_;
+//
+//  //error_x = desired_belt_x_ - current_belt_x_;
+//  error_y = desired_belt_y_ - current_belt_y_;
+//  error_z = desired_belt_z_ - current_belt_z_;
+//
+//  change_y_ = 0.0001* error_y;
+//  change_z_ = 0.0001* error_z;
+
+  //cout << " error_y  :"<< error_y << endl;
+  //cout << " error_z  :"<< error_z << endl;
+
+}
 bool TaskRobot::tasks(std::string command)
 {
+  if(!robot_name_.compare("robot_B"))
+    estimation_of_belt_position();
+
   static bool task_check = false;
 
   if(!command.compare(""))
@@ -208,8 +298,8 @@ bool TaskRobot::tasks(std::string command)
 
   if(!command.compare("auto"))
   {
-    task_check = robot_task_->make_belt_robust(belt_robust_value_);
-    task_check = robot_task_->close_to_pulleys(0.05);
+    //task_check = robot_task_->make_belt_robust(belt_robust_value_);
+    //task_check = robot_task_->close_to_pulleys(0.05);
     //task_check = robot_task_->insert_belt_into_pulley(contact_check_, change_x_, change_y_, change_z_);
     robot_task_->generate_trajectory();
     robot_task_->check_phases();
@@ -334,13 +424,15 @@ bool TaskRobot::hybrid_controller()
 
     //cout << pid_compensation << endl;
 
-    compensated_pose_vector_[0] = compensated_pose_vector_[0] + pid_compensation_[0]; //+ ros_state->get_rl_action()[0];
-    compensated_pose_vector_[1] = compensated_pose_vector_[1] + pid_compensation_[1]; //+ ros_state->get_rl_action()[1];
-    compensated_pose_vector_[2] = compensated_pose_vector_[2] + pid_compensation_[2]; //+ ros_state->get_rl_action()[2];
+    compensated_pose_vector_[0] = compensated_pose_vector_[0] + pid_compensation_[0] + change_x_; //+ ros_state->get_rl_action()[0];
+    compensated_pose_vector_[1] = compensated_pose_vector_[1] + pid_compensation_[1] + change_y_; //+ ros_state->get_rl_action()[1];
+    compensated_pose_vector_[2] = compensated_pose_vector_[2] + pid_compensation_[2] + change_z_; //+ ros_state->get_rl_action()[2];
 
     compensated_pose_vector_[3] = desired_pose_vector_[3]; //+ force_x_compensator->get_final_output();
     compensated_pose_vector_[4] = desired_pose_vector_[4]; //+ force_x_compensator->get_final_output();
     compensated_pose_vector_[5] = desired_pose_vector_[5]; //+ force_x_compensator->get_final_output();
+
+    tf_current_ = Transform3D<> (Vector3D<>(compensated_pose_vector_[0], compensated_pose_vector_[1], compensated_pose_vector_[2]), EAA<>(compensated_pose_vector_[3], compensated_pose_vector_[4], compensated_pose_vector_[5]).toRotation3D());
   }
 
   error_ee_pose_[0] = position_x_controller_->get_error();
@@ -395,8 +487,8 @@ bool TaskRobot::hybrid_controller()
     if(fabs((compensated_q_[num] - current_q_[num])/control_time_) > 270*DEGREE2RADIAN)
     {
       std::cout << robot_name_ << "::" << num << "::" << fabs((compensated_q_[num] - current_q_[num])/control_time_) << std::endl;
-      //std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
-      //joint_vel_limits_ = true;
+      std::cout << COLOR_RED_BOLD << "Robot speed is so FAST" << COLOR_RESET << std::endl;
+      joint_vel_limits_ = true;
       control_check_ = false;
     }
   }
@@ -454,6 +546,17 @@ void TaskRobot::parse_init_data_(const std::string &path)
 
   preferred_solution_number_ =  doc["preferred_solution_number"].as<double>();
   YAML::Node initial_joint_states = doc["initial_joint_states"];
+  YAML::Node bigger_pulley_bearing_position_node = doc["bigger_pulley_bearing_position"];
+  std::vector<double> bigger_pulley_bearing_position;
+
+  for(int num = 0; num < 6; num ++)
+  {
+    bigger_pulley_bearing_position.push_back(bigger_pulley_bearing_position_node[num].as<double>());
+  }
+
+  tf_base_to_bearing_ = Transform3D<> (Vector3D<>(bigger_pulley_bearing_position[0], bigger_pulley_bearing_position[1], bigger_pulley_bearing_position[2]), EAA<>(bigger_pulley_bearing_position[3], bigger_pulley_bearing_position[4], bigger_pulley_bearing_position[5]).toRotation3D());
+
+  bigger_pulley_bearing_position.clear();
 
   force_controller_gain_.x_kp = doc["f_x_kp"].as<double>();
   force_controller_gain_.x_ki = doc["f_x_ki"].as<double>();
@@ -576,7 +679,10 @@ void TaskRobot::set_position_controller_eaa_z_gain(double kp,double ki,double kd
 void TaskRobot::set_robust_value(double robust_value)
 {
   belt_robust_value_ = robust_value;
-
+}
+void TaskRobot::set_tf_static_robot(rw::math::Transform3D<> tf_base_to_staric_robot)
+{
+  tf_base_to_static_robot_ = tf_base_to_staric_robot;
 }
 void TaskRobot::set_belt_change_values(double x, double y, double z)
 {
@@ -603,6 +709,10 @@ std::vector<double> TaskRobot::get_actual_tcp_speed_()
 std::vector<double> TaskRobot::get_current_q_()
 {
   return current_q_;
+}
+rw::math::Transform3D<> TaskRobot::get_tf_current_()
+{
+  return tf_current_;
 }
 void TaskRobot::terminate_robot()
 {

@@ -30,7 +30,7 @@ void loop_robot_a_proc(void *arg)
 	bool task_completed = false;
 	double task_time_A = 0.0;
 
-	robot_a->set_robust_value(0.17);
+	robot_a->set_robust_value(0.005);
 
 	while(!exit_program)
 	{
@@ -81,11 +81,12 @@ void loop_robot_b_proc(void *arg)
   bool task_completed = false;
   double task_time_B = 0.0;
 
-  robot_b->set_robust_value(0.05);
+  robot_b->set_robust_value(0.005);
 
   while(!exit_program)
   {
     m.lock();
+    robot_b->set_tf_static_robot(robot_a->get_tf_current_());
     ros_state->update_ros_data();
     tstart_B = rt_timer_read();
 
@@ -106,6 +107,7 @@ void loop_robot_b_proc(void *arg)
     if(task_time_B >= 2.0)
       cout << COLOR_GREEN_BOLD << "Check task's completion B : " << task_completed << "  Elapsed time : "<< task_time_B << COLOR_RESET << endl;
     m.unlock();
+
     rt_task_wait_period(NULL);
   }
 }
@@ -200,7 +202,11 @@ int main (int argc, char **argv)
 
 	signal(SIGINT, my_function);
 
-	pause();
+	while(!exit_program)
+	{
+	  usleep(0.001);
+	}
+	//pause();
 
 	rt_task_delete(&loop_robot_a);
 	rt_task_delete(&loop_robot_b);

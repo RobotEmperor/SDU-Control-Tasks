@@ -349,6 +349,35 @@ bool TaskMotion::close_to_pulleys(double depth)
 }
 bool TaskMotion::insert_belt_into_pulley(bool contact_, double change_x, double change_y, double change_z)
 {
+  static RPY<> tcp_rpy_;
+  static RPY<> pulley_frame_rpy_;
+  static Vector3D<> pulley_frame_xyz_;
+
+  if(pre_phases_ != phases_)
+    tf_static_frame_ = tf_current_pose_;
+
+  // output always has to be points in relative to base frame (global)
+  if(phases_ == 1)
+  {
+    tcp_rpy_ = RPY<>(0,0,0);
+
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, change_y, change_z), tcp_rpy_.toRotation3D());
+
+    tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
+
+    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+    for(int num = 0; num <6 ; num ++)
+    {
+      desired_pose_matrix(num,7) = 1;
+    }
+  }
 
 }
 void TaskMotion::check_phases()

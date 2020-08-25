@@ -56,6 +56,7 @@ public:
   void init_model(std::string wc_file, std::string robot_model);
   void move_to_init_pose();
 
+  void estimation_of_belt_position();
   bool tasks(std::string command);
   bool hybrid_controller();
 
@@ -80,12 +81,14 @@ public:
 
   void set_robust_value(double robust_value);
   void set_belt_change_values(double x, double y, double z);
+  void set_tf_static_robot(rw::math::Transform3D<> tf_base_to_staric_robot_);
 
   std::vector<double> get_raw_ft_data_();
   std::vector<double> get_contacted_ft_data_();
   std::vector<double> get_error_ee_pose_();
   std::vector<double> get_actual_tcp_speed_();
   std::vector<double> get_current_q_();
+  rw::math::Transform3D<> get_tf_current_();
 
 private:
 
@@ -183,10 +186,12 @@ private:
   rw::math::Transform3D<> tf_modified_pose_;
   rw::math::Transform3D<> tf_current_;
   rw::math::Transform3D<> tf_desired_;
+  rw::math::Transform3D<> tf_base_to_bearing_;
 
   rw::math::Wrench6D<> current_ft_;
   rw::math::Wrench6D<> current_ft_no_offset_;
   rw::math::Wrench6D<> tf_tcp_current_force_;
+  rw::math::Transform3D<> tf_base_to_static_robot_;
 
   //control
   double control_time_;
@@ -194,6 +199,8 @@ private:
   double tool_mass_;
   double belt_robust_value_;
   double change_x_, change_y_, change_z_;
+  double current_belt_x_, current_belt_y_, current_belt_z_;
+  double desired_belt_x_, desired_belt_y_, desired_belt_z_;
 
   bool contact_check_;
   bool control_check_;
