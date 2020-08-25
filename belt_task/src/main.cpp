@@ -30,14 +30,14 @@ void loop_robot_a_proc(void *arg)
 	bool task_completed = false;
 	double task_time_A = 0.0;
 
-	robot_a->set_robust_value(0.005);
+	robot_a->set_robust_value(-0.025);
 
 	while(!exit_program)
 	{
+		m.lock();
 		ros_state->update_ros_data();
 		tstart_A = rt_timer_read();
 
-		m.lock();
 		robot_a->tasks(ros_state->get_task_command());
 		robot_a->hybrid_controller();
 
@@ -48,68 +48,68 @@ void loop_robot_a_proc(void *arg)
 
 		ros_state->send_raw_ft_data(robot_a->get_raw_ft_data_());
 		ros_state->send_filtered_ft_data(robot_a->get_contacted_ft_data_());
-		ros_state->send_error_ee_pose(robot_a->get_error_ee_pose_());
-		ros_state->send_ee_velocity(robot_a->get_actual_tcp_speed_());
+		//		ros_state->send_error_ee_pose(robot_a->get_error_ee_pose_());
+		//		ros_state->send_ee_velocity(robot_a->get_actual_tcp_speed_());
 
 		task_time_A = (rt_timer_read() - tstart_A)/1000000.0;
 		if(task_time_A >= 2.0)
-		  cout << COLOR_GREEN_BOLD << "Check task's completion A : " << task_completed << " Elapsed time : "<< task_time_A << COLOR_RESET << endl;
+			cout << COLOR_GREEN_BOLD << "Check task's completion A : " << task_completed << " Elapsed time : "<< task_time_A << COLOR_RESET << endl;
 		m.unlock();
 		rt_task_wait_period(NULL);
 	}
 }
 void loop_robot_b_proc(void *arg)
 {
-  RT_TASK *curtask;
-  RT_TASK_INFO curtaskinfo;
+	RT_TASK *curtask;
+	RT_TASK_INFO curtaskinfo;
 
-  curtask = rt_task_self();
-  rt_task_inquire(curtask, &curtaskinfo);
+	curtask = rt_task_self();
+	rt_task_inquire(curtask, &curtaskinfo);
 
-  printf("Starting task %s with period of %f ms ....\n", curtaskinfo.name, control_time*1000);
-  //Make the task periodic with a specified loop period
+	printf("Starting task %s with period of %f ms ....\n", curtaskinfo.name, control_time*1000);
+	//Make the task periodic with a specified loop period
 
-  RTIME tstart_B;
-  rt_task_set_periodic(NULL, TM_NOW, LOOP_PERIOD);
-  tstart_B = rt_timer_read();
+	RTIME tstart_B;
+	rt_task_set_periodic(NULL, TM_NOW, LOOP_PERIOD);
+	tstart_B = rt_timer_read();
 
-  if(gazebo_check)
-  {
-    std::cout << COLOR_GREEN_BOLD << "Gazebo robot B start " << COLOR_RESET << std::endl;
-  }
+	if(gazebo_check)
+	{
+		std::cout << COLOR_GREEN_BOLD << "Gazebo robot B start " << COLOR_RESET << std::endl;
+	}
 
-  bool task_completed = false;
-  double task_time_B = 0.0;
+	bool task_completed = false;
+	double task_time_B = 0.0;
 
-  robot_b->set_robust_value(0.005);
+	robot_b->set_robust_value(0);
 
-  while(!exit_program)
-  {
-    m.lock();
-    robot_b->set_tf_static_robot(robot_a->get_tf_current_());
-    ros_state->update_ros_data();
-    tstart_B = rt_timer_read();
+	while(!exit_program)
+	{
+		m.lock();
+		robot_b->set_tf_static_robot(robot_a->get_tf_current_(), robot_a->get_tf_base_to_bearing_());
+		ros_state->update_ros_data();
+		tstart_B = rt_timer_read();
 
-    robot_b->tasks(ros_state->get_task_command());
-    robot_b->hybrid_controller();
+		robot_b->tasks(ros_state->get_task_command());
+		robot_b->hybrid_controller();
 
-    if(gazebo_check)
-    {
-      ros_state->send_gazebo_b_command(robot_b->get_current_q_());
-    }
+		if(gazebo_check)
+		{
+			ros_state->send_gazebo_b_command(robot_b->get_current_q_());
+		}
 
-    ros_state->send_raw_ft_data(robot_b->get_raw_ft_data_());
-    ros_state->send_filtered_ft_data(robot_b->get_contacted_ft_data_());
-    ros_state->send_error_ee_pose(robot_b->get_error_ee_pose_());
-    ros_state->send_ee_velocity(robot_b->get_actual_tcp_speed_());
+		//    ros_state->send_raw_ft_data(robot_b->get_raw_ft_data_());
+		//    ros_state->send_filtered_ft_data(robot_b->get_contacted_ft_data_());
+		//    ros_state->send_error_ee_pose(robot_b->get_error_ee_pose_());
+		//    ros_state->send_ee_velocity(robot_b->get_actual_tcp_speed_());
 
-    task_time_B = (rt_timer_read() - tstart_B)/1000000.0;
-    if(task_time_B >= 2.0)
-      cout << COLOR_GREEN_BOLD << "Check task's completion B : " << task_completed << "  Elapsed time : "<< task_time_B << COLOR_RESET << endl;
-    m.unlock();
+		task_time_B = (rt_timer_read() - tstart_B)/1000000.0;
+		if(task_time_B >= 2.0)
+			cout << COLOR_GREEN_BOLD << "Check task's completion B : " << task_completed << "  Elapsed time : "<< task_time_B << COLOR_RESET << endl;
+		m.unlock();
 
-    rt_task_wait_period(NULL);
-  }
+		rt_task_wait_period(NULL);
+	}
 }
 void initialize()
 {
@@ -169,7 +169,7 @@ int main (int argc, char **argv)
 	}
 	std::cout << COLOR_GREEN_BOLD << "Program Start:" << COLOR_RESET << std::endl;
 
-	usleep(3000000);
+	usleep(1000000);
 
 	ros_state->update_ros_data();
 
@@ -204,7 +204,7 @@ int main (int argc, char **argv)
 
 	while(!exit_program)
 	{
-	  usleep(0.001);
+		usleep(0.01);
 	}
 	//pause();
 

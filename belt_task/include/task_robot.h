@@ -81,7 +81,7 @@ public:
 
   void set_robust_value(double robust_value);
   void set_belt_change_values(double x, double y, double z);
-  void set_tf_static_robot(rw::math::Transform3D<> tf_base_to_staric_robot_);
+  void set_tf_static_robot(rw::math::Transform3D<> tf_base_to_staric_robot, rw::math::Transform3D<> tf_base_to_bearing_staric_robot);
 
   std::vector<double> get_raw_ft_data_();
   std::vector<double> get_contacted_ft_data_();
@@ -89,6 +89,7 @@ public:
   std::vector<double> get_actual_tcp_speed_();
   std::vector<double> get_current_q_();
   rw::math::Transform3D<> get_tf_current_();
+  rw::math::Transform3D<> get_tf_base_to_bearing_();
 
 private:
 
@@ -192,6 +193,7 @@ private:
   rw::math::Wrench6D<> current_ft_no_offset_;
   rw::math::Wrench6D<> tf_tcp_current_force_;
   rw::math::Transform3D<> tf_base_to_static_robot_;
+  rw::math::Transform3D<> tf_base_to_bearing_static_robot_;
 
   //control
   double control_time_;
