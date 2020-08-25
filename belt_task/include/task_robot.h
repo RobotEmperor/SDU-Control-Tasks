@@ -220,6 +220,12 @@ private:
 
   // gazebo
   bool gazebo_check_;
+
+  //
+  bool flag;
+
+
+
 };
 
 
