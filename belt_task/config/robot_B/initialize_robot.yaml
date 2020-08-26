@@ -30,7 +30,7 @@ f_eaa_z_ki : 0
 f_eaa_z_kd : 0
 
 #position controller gain
-p_x_kp : 0.7
+p_x_kp : 0.5
 p_x_ki : 0
 p_x_kd : 0
 

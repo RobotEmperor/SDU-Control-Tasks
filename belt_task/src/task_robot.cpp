@@ -266,7 +266,7 @@ void TaskRobot::estimation_of_belt_position(double radious)
 		//bearing robot point // different
 		desired_belt_[0] = 0;
 		desired_belt_[1] = radious; // radious 0.031 gripper 66 %
-		desired_belt_[2] = -0.005;
+		desired_belt_[2] = -0.004;
 
 		cout << " init_current_belt_  :"<< init_current_belt_ << endl;
 		//cout << " temp_start_xy  :"<< temp_start_xy << endl;
@@ -392,12 +392,12 @@ bool TaskRobot::tasks(std::string command)
 			}
 			if(robot_task_->get_phases_() == 4)
 			{
-                                finish_1(contact_check_, 0.02, 0, 0, 0, 0, 0);
+                                robot_task_->finish_1(contact_check_, 0.02, 0, 0, 0, 0, 0);
 				//task_check = robot_task_->up_motion(contact_check_, 0.005, 0, 0, 0, 0, 0);
 			}
                         if(robot_task_->get_phases_() == 5)
 			{
-                                finish_2(contact_check_, 0, 0, -0,04, 0, 0, 0);
+                                robot_task_->finish_2(contact_check_, 0, 0, -0.04, 0, 0, 0);
 				//task_check = robot_task_->up_motion(contact_check_, 0.005, 0, 0, 0, 0, 0);
 			}
 			//std::cout << robot_task_->get_phases_()  << std::endl;
@@ -412,9 +412,9 @@ bool TaskRobot::tasks(std::string command)
 			{
 				rw::math::Transform3D<> tf_tcp_rotated_;
 
-				tcp_non_rotated_desired[0] = 0.001;
+				tcp_non_rotated_desired[0] = 0;
 				tcp_non_rotated_desired[1] = 0;
-				tcp_non_rotated_desired[2] = -0.01;
+				tcp_non_rotated_desired[2] = 0;
 
 				tf_tcp_rotated_ = Transform3D<> (Vector3D<>(0, 0, 0), RPY<>(0, 25*DEGREE2RADIAN,0).toRotation3D());
 
@@ -425,7 +425,7 @@ bool TaskRobot::tasks(std::string command)
 			{
 				rw::math::Transform3D<> tf_tcp_rotated_;
 
-				tcp_non_rotated_desired[0] = -0.015;
+				tcp_non_rotated_desired[0] = -0.02;
 				tcp_non_rotated_desired[1] = -0.064;
 				tcp_non_rotated_desired[2] = 0;
 
@@ -441,12 +441,12 @@ bool TaskRobot::tasks(std::string command)
 			if(robot_task_->get_phases_() == 2)
 			{
 				if(!flag)
-					estimation_of_belt_position(0.032);
+					estimation_of_belt_position(0.0319);
 				task_check = robot_task_->insert_belt_into_pulley(contact_check_, change_x_, change_y_, change_z_);
 			}
 			if(robot_task_->get_phases_() == 3)
 			{
-				task_check = robot_task_->up_motion(contact_check_, tcp_non_rotated_desired[0], tcp_non_rotated_desired[1], tcp_non_rotated_desired[2], 0, 0, 0);
+				task_check = robot_task_->up_motion(contact_check_, tcp_non_rotated_desired[0], tcp_non_rotated_desired[1], tcp_non_rotated_desired[2], 0, 5*DEGREE2RADIAN, 0);
 				desired_force_torque_vector_[0] = 0;
 				desired_force_torque_vector_[1] = 24;
 				//std::cout << current_ft_.force()<< std::endl;
@@ -454,12 +454,12 @@ bool TaskRobot::tasks(std::string command)
 			if(robot_task_->get_phases_() == 4)
 			{
                                 desired_force_torque_vector_[1] = 0;
-                                finish_1(contact_check_, 0.02, 0, 0, 0, 0, 0);
+                                robot_task_->finish_1(contact_check_, -0.005, 0, 0, 0, 0, 0);
 				//task_check = robot_task_->up_motion(contact_check_, 0.005, 0, 0, 0, 0, 0);
 			}
                         if(robot_task_->get_phases_() == 5)
 			{
-                                finish_2(contact_check_, 0, 0, -0,04, 0, 0, 0);
+                                robot_task_->finish_2(contact_check_, 0, 0, -0.04, 0, 0, 0);
 				//task_check = robot_task_->up_motion(contact_check_, 0.005, 0, 0, 0, 0, 0);
 			}
 

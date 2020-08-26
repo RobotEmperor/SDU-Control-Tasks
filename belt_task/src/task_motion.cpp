@@ -376,7 +376,7 @@ bool TaskMotion::insert_belt_into_pulley(bool contact_, double change_x, double 
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 4;
+      desired_pose_matrix(num,7) = 7;
     }
   }
 }
@@ -408,7 +408,7 @@ bool TaskMotion::up_motion(bool contact_, double x, double y, double z, double a
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 4;
+      desired_pose_matrix(num,7) = 2;
     }
   }
 }
@@ -424,9 +424,9 @@ bool TaskMotion::finish_1(bool contact_, double x, double y, double z, double ax
   // output always has to be points in relative to base frame (global)
   if(phases_ == 4)
   {
-    tcp_rpy_ = RPY<>(0,0,0);
+    tcp_rpy_ = RPY<>(axis_x,axis_y,axis_z);
 
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(change_x, change_y, change_z), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(x, y, z), tcp_rpy_.toRotation3D());
 
     tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
 
@@ -440,7 +440,7 @@ bool TaskMotion::finish_1(bool contact_, double x, double y, double z, double ax
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 4;
+      desired_pose_matrix(num,7) = 1;
     }
   }
 }
@@ -456,9 +456,9 @@ bool TaskMotion::finish_2(bool contact_, double x, double y, double z, double ax
   // output always has to be points in relative to base frame (global)
   if(phases_ == 5)
   {
-    tcp_rpy_ = RPY<>(0,0,0);
+    tcp_rpy_ = RPY<>(axis_x,axis_y,axis_z);
 
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(change_x, change_y, change_z), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(x, y, z), tcp_rpy_.toRotation3D());
 
     tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
 
@@ -472,7 +472,7 @@ bool TaskMotion::finish_2(bool contact_, double x, double y, double z, double ax
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 4;
+      desired_pose_matrix(num,7) = 1;
     }
   }
 }
