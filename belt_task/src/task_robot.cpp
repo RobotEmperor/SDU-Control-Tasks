@@ -396,8 +396,8 @@ bool TaskRobot::tasks(std::string command)
     task_check = robot_task_->make_belt_robust(belt_robust_value_);
     if(!robot_name_.compare("robot_B"))
     {
-      // cout << robot_task_->get_phases_() << endl;
-      //task_check = robot_task_-> close_to_pulleys(-0.02);
+      cout << robot_task_->get_phases_() << endl;
+      task_check = robot_task_-> close_to_pulleys(-0.02);
 
       if(robot_task_->get_phases_() == 2)
       {
@@ -405,11 +405,7 @@ bool TaskRobot::tasks(std::string command)
           estimation_of_belt_position();
         task_check = robot_task_->insert_belt_into_pulley(contact_check_, change_x_, change_y_, change_z_);
       }
-      else if (robot_task_->get_phases_() > 2)
-      {
-        flag = false;
-        estimation_of_belt_position();
-      }
+
     }
     robot_task_->generate_trajectory();
     robot_task_->check_phases();
