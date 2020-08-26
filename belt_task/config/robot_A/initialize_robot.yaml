@@ -5,7 +5,7 @@ initial_joint_states : [2.97326, -1.6538, -2.33488, -2.28384, -2.53001, -3.13221
 task_initial_position: [-0.13, 0, -0.04, 0,0,0] # in relative to bigger pulley bearing's frame.
 
 #force controller gain
-f_x_kp : 0.00022
+f_x_kp : 0.00005
 f_x_ki : 0
 f_x_kd : 0
 
@@ -30,7 +30,7 @@ f_eaa_z_ki : 0
 f_eaa_z_kd : 0
 
 #position controller gain
-p_x_kp : 1 #0.6
+p_x_kp : 0.7 #0.6
 p_x_ki : 0
 p_x_kd : 0
 

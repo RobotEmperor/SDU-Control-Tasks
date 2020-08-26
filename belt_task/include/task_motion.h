@@ -41,9 +41,13 @@ public:
   void load_task_motion(std::string path_, std::string motion_);
 
   bool insert_belt_into_pulley(bool contact_, double change_x, double change_y, double change_z);
+  bool up_motion(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z);
 
-  bool close_to_pulleys(double depth);
+  bool close_to_pulleys(double x,double y,double depth);
   bool make_belt_robust(double radious);
+
+  bool finish_1(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z);
+  bool finish_2(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z);
 
   void check_phases();
   void run_task_motion();

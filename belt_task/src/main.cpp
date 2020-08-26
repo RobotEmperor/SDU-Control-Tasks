@@ -30,7 +30,7 @@ void loop_robot_a_proc(void *arg)
 	bool task_completed = false;
 	double task_time_A = 0.0;
 
-	robot_a->set_robust_value(-0.025);
+	robot_a->set_robust_value(-0.0515);
 
 	while(!exit_program)
 	{
@@ -38,7 +38,7 @@ void loop_robot_a_proc(void *arg)
 		ros_state->update_ros_data();
 		tstart_A = rt_timer_read();
 
-		robot_a->tasks(ros_state->get_task_command());
+		robot_a->tasks("auto");
 		robot_a->hybrid_controller();
 
 		if(gazebo_check)
@@ -90,7 +90,7 @@ void loop_robot_b_proc(void *arg)
 		ros_state->update_ros_data();
 		tstart_B = rt_timer_read();
 
-		robot_b->tasks(ros_state->get_task_command());
+		robot_b->tasks("auto");
 		robot_b->hybrid_controller();
 
 		if(gazebo_check)
@@ -204,7 +204,7 @@ int main (int argc, char **argv)
 
 	while(!exit_program)
 	{
-		usleep(0.01);
+		usleep(0.1);
 	}
 	//pause();
 

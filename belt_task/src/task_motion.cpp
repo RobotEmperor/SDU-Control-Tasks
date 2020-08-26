@@ -312,11 +312,11 @@ bool TaskMotion::make_belt_robust(double radious)
 
     for(int num = 0; num <6; num ++)
     {
-      desired_pose_matrix(num,7) = 2.5;
+      desired_pose_matrix(num,7) = 5;
     }
   }
 }
-bool TaskMotion::close_to_pulleys(double depth)
+bool TaskMotion::close_to_pulleys(double x,double y,double depth)
 {
   static RPY<> tcp_rpy_;
   static RPY<> pulley_frame_rpy_;
@@ -330,7 +330,7 @@ bool TaskMotion::close_to_pulleys(double depth)
   {
     tcp_rpy_ = RPY<>(0,0,0);
 
-    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(0, 0, depth), tcp_rpy_.toRotation3D());
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(x, y, depth), tcp_rpy_.toRotation3D());
 
     tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
 
@@ -376,14 +376,110 @@ bool TaskMotion::insert_belt_into_pulley(bool contact_, double change_x, double 
 
     for(int num = 0; num <6 ; num ++)
     {
-      desired_pose_matrix(num,7) = 1;
+      desired_pose_matrix(num,7) = 4;
+    }
+  }
+}
+bool TaskMotion::up_motion(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z)
+{
+  static RPY<> tcp_rpy_;
+  static RPY<> pulley_frame_rpy_;
+  static Vector3D<> pulley_frame_xyz_;
+  //
+  if(pre_phases_ != phases_)
+    tf_static_frame_ = tf_current_pose_;
+
+  // output always has to be points in relative to base frame (global)
+  if(phases_ == 3)
+  {
+    tcp_rpy_ = RPY<>(axis_x,axis_y,axis_z);
+
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(x, y, z), tcp_rpy_.toRotation3D());
+
+    tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
+
+    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+    for(int num = 0; num <6 ; num ++)
+    {
+      desired_pose_matrix(num,7) = 4;
+    }
+  }
+}
+bool TaskMotion::finish_1(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z)
+{
+  static RPY<> tcp_rpy_;
+  static RPY<> pulley_frame_rpy_;
+  static Vector3D<> pulley_frame_xyz_;
+  //
+  if(pre_phases_ != phases_)
+    tf_static_frame_ = tf_current_pose_;
+
+  // output always has to be points in relative to base frame (global)
+  if(phases_ == 4)
+  {
+    tcp_rpy_ = RPY<>(0,0,0);
+
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(change_x, change_y, change_z), tcp_rpy_.toRotation3D());
+
+    tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
+
+    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+    for(int num = 0; num <6 ; num ++)
+    {
+      desired_pose_matrix(num,7) = 4;
+    }
+  }
+}
+bool TaskMotion::finish_2(bool contact_, double x, double y, double z, double axis_x, double axis_y, double axis_z)
+{
+  static RPY<> tcp_rpy_;
+  static RPY<> pulley_frame_rpy_;
+  static Vector3D<> pulley_frame_xyz_;
+  //
+  if(pre_phases_ != phases_)
+    tf_static_frame_ = tf_current_pose_;
+
+  // output always has to be points in relative to base frame (global)
+  if(phases_ == 5)
+  {
+    tcp_rpy_ = RPY<>(0,0,0);
+
+    tf_tcp_desired_pose_ = Transform3D<> (Vector3D<>(change_x, change_y, change_z), tcp_rpy_.toRotation3D());
+
+    tf_desired_pose_ = tf_static_frame_*tf_tcp_desired_pose_;
+
+    desired_pose_matrix(0,1) = Vector3D<> (tf_desired_pose_.P())[0];
+    desired_pose_matrix(1,1) = Vector3D<> (tf_desired_pose_.P())[1];
+    desired_pose_matrix(2,1) = Vector3D<> (tf_desired_pose_.P())[2];
+
+    desired_pose_matrix(3,1) = EAA<> (tf_desired_pose_.R())[0];
+    desired_pose_matrix(4,1) = EAA<> (tf_desired_pose_.R())[1];
+    desired_pose_matrix(5,1) = EAA<> (tf_desired_pose_.R())[2];
+
+    for(int num = 0; num <6 ; num ++)
+    {
+      desired_pose_matrix(num,7) = 4;
     }
   }
 }
 void TaskMotion::check_phases()
 {
   pre_phases_ = phases_;
-  if(robot_traj->is_moving_check == false && phases_ < 3)
+  if(robot_traj->is_moving_check == false && phases_ < 6)
   {
     phases_ ++;
   }
