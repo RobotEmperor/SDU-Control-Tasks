@@ -105,7 +105,7 @@ TaskRobot::TaskRobot(std::string robot_name, std::string init_path)
   desired_pose_vector_ = robot_task_ -> get_current_pose();
 
   //control
-  force_x_compensator_ = std::make_shared<PID_function>(control_time_, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
+  force_x_compensator_ = std::make_shared<PID_function>(control_time_, 0.0075, -0.0075, 0, 0, 0, 0.0000001, -0.0000001);
   force_y_compensator_ = std::make_shared<PID_function>(control_time_, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
   force_z_compensator_ = std::make_shared<PID_function>(control_time_, 0.0045, -0.0045, 0, 0, 0, 0.0000001, -0.0000001);
 
@@ -230,9 +230,18 @@ void TaskRobot::estimation_of_belt_position(double radious)
     init_current_belt_[1] = tf_bearing_to_moveable_robot_start.P()[1] + 0.008; // same in two robot
     init_current_belt_[2] = tf_bearing_to_moveable_robot_start.P()[2];
 
-    desired_belt_[0] = 0;
     desired_belt_[1] = radious; // radious 0.031 gripper 66 %
     desired_belt_[2] = -0.004;
+
+  if(!robot_name_.compare("robot_B"))
+    {
+    desired_belt_[0] = -0.01;
+    }
+    else
+    {
+    desired_belt_[0] = 0;
+    }
+
 
     data_desired_belt_[0] = desired_belt_[0];
     data_desired_belt_[1] = desired_belt_[1];
@@ -356,9 +365,9 @@ bool TaskRobot::tasks(std::string command)
       {
         rw::math::Transform3D<> tf_tcp_rotated_;
 
-        tcp_non_rotated_desired[0] = -0.02;
+        tcp_non_rotated_desired[0] = -0.005;
         tcp_non_rotated_desired[1] = -0.064;
-        tcp_non_rotated_desired[2] = 0;
+        tcp_non_rotated_desired[2] = -0.005;
 
         tf_tcp_rotated_ = Transform3D<> (Vector3D<>(0, 0, 0), RPY<>(0, 25*DEGREE2RADIAN,0).toRotation3D());
 
@@ -374,6 +383,8 @@ bool TaskRobot::tasks(std::string command)
         if(!flag)
           estimation_of_belt_position(0.0319);
         task_check = robot_task_->insert_belt_into_pulley(contact_check_, change_x_, change_y_, change_z_);
+
+        desired_force_torque_vector_[0] = 0;
 
         temp = tf_base_to_bearing_;
         temp.invMult(temp, tf_current_);
@@ -395,7 +406,7 @@ bool TaskRobot::tasks(std::string command)
       if(robot_task_->get_phases_() == 4)
       {
         desired_force_torque_vector_[1] = 0;
-        robot_task_->finish_1(contact_check_, -0.005, 0, 0, 0, 0, 0);
+        robot_task_->finish_1(contact_check_,  -0.005,0,0, 0, 0 ,0);
         //task_check = robot_task_->up_motion(contact_check_, 0.005, 0, 0, 0, 0, 0);
       }
       if(robot_task_->get_phases_() == 5)
