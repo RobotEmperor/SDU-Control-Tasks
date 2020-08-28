@@ -179,6 +179,9 @@ private:
 	std::vector<double> force_controller_; //(6);
 	std::vector<double> position_controller_; //(6);
 
+  std::vector<double> data_current_belt_;
+  std::vector<double> data_desired_belt_;
+
 	//task motion
 	std::string previous_task_command_;
 
@@ -229,12 +232,13 @@ private:
 	rw::math::Transform3D<> tf_bearing_to_rubber_point;
 	rw::math::Transform3D<> tf_bearing_to_moveable_robot_start;
 	rw::math::Transform3D<> tf_bearing_to_moveable_robot;
+	rw::math::Transform3D<> tf_bearing_to_error;
 	rw::math::Transform3D<> distance_tf_static_robot_to_moveable_robot;
 	rw::math::Transform3D<> distance_tf_static_robot_to_moveable_robot_start;
 	rw::math::Transform3D<> tf_static_robot_to_bearing;
 	rw::math::Transform3D<> tf_static_robot_to_rubber_point;
 	rw::math::Transform3D<> tf_moveable_robot_to_bearing;
-	rw::math::Transform3D<> tf_bearing_to_error;
+  rw::math::Transform3D<> tf_moveable_robot_to_init_belt_;
 	rw::math::Transform3D<> tf_moveable_robot_to_error;
 
 	rw::math::Transform3D<> temp;

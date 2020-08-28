@@ -37,6 +37,8 @@ public:
   void set_data_getContactedForceTorque(std::vector<double> contacted_ft);
   void set_data_getPidCompensation(std::vector<double> pid_compensation);
   void set_data_getDesiredTCPPose(std::vector<double> desired_pose);
+  void set_data_getBeltPosition(std::vector<double> belt_position);
+  void set_data_getDesiredBeltPosition(std::vector<double> desired_belt_position);
   void set_data_new_line();
   std::string data_change_to_string(std::vector<double> data);
 
@@ -54,6 +56,8 @@ private:
   std::string getContactedForceTorque_;
   std::string getPidCompensation_;
   std::string getDesiredTCPPose_;
+  std::string getBeltPosition_;
+  std::string getDesiredBeltPosition_;
 
 
 };
